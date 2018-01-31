@@ -48,6 +48,15 @@ case class Application(f: Expr, e: Expr) extends Expr {
     val Some(subst) = a unify e.typ(context)
     b substitute subst
   }
+
+  override def toString: String = this match {
+    case Application(Application(Catamorphism, g), op) => s"⦇$g, $op⦈"
+    case Application(Application(Catamorphism, Identity), Concat) => "flatten"
+//    case Application(Application(Catamorphism, Composition(Singleton, g)), Concat) => s"$g*"
+//    case Application(Application(Fold, (Composition(Singleton, Singleton))), InitsOp) => "inits"
+//    case Application(Application(Fold, (Composition(Singleton, Singleton))), TailsOp) => "tails"
+    case _ => s"$f $e"
+  }
 }
 
 case class Var(n: Int) extends Expr {
@@ -72,6 +81,8 @@ case class VarType(v: Var, t: Type) {
 
 case class Lambda(v: Var, t: Type, body: Expr) extends Expr {
   override def typ(context: Context): Type = t ->: body.typ(context.updated(v.n, t))
+
+  override def toString: String = s"λ$v. $body"
 }
 
 case object Identity extends Expr {

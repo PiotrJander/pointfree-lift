@@ -21,5 +21,6 @@ class LambdaTest {
     println(flatten.typ(empty))
     println(initsOp.typ(empty))
     println(tailsOp.typ(empty))
+    println(Catamorphism(Identity)(Identity))
   }
 }

@@ -4,11 +4,10 @@ import pointfree.UnificationException
 
 import scalaz.{State, _}
 import Scalaz.{tails => _, _}
-import scala.collection.immutable
+import Context.empty
 
 
 sealed abstract class Type {
-  import Type._
 
   def ->:(a: Type): Type = TArrow(a, this)
 
@@ -29,10 +28,10 @@ sealed abstract class Type {
   }
 
   def _alpha(all: List[Int], repeated: List[Int]): Context = repeated match {
-    case Nil => immutable.Map[Int, Type]()
+    case Nil => empty
     case v :: rest =>
       val free: Int = (0 until Int.MaxValue).find(!all.contains(_)).get
-      _alpha(free :: all, rest) + (v -> TVar(free))
+      _alpha(free :: all, rest) + (v, TVar(free))
   }
 
   def substitute(subst: Context): Type = this match {
@@ -45,15 +44,15 @@ sealed abstract class Type {
 
   def unify(t: Type): Option[Context] =
     try {
-      (this _unify t).exec(immutable.Map[Int, Type]()).some
+      (this _unify t).exec(empty).some
     } catch {
       case UnificationException => None
     }
 
   def _unify(t: Type): State[Context, Unit] = (this, t) match {
     // TODO impl proper unification
-    case (TVar(n), a) => modify(s => s + (n -> a))
-    case (a, TVar(n)) => modify(s => s + (n -> a))
+    case (TVar(n), a) => modify(s => s + (n, a))
+    case (a, TVar(n)) => modify(s => s + (n, a))
     case (TList(a), TList(b)) => a _unify b
     case (TPair(a, b), TPair(c, d)) => (a _unify c) >> (b _unify d)
     case (TArrow(a, b), TArrow(c, d)) => (a _unify c) >> (b _unify d)
@@ -78,12 +77,6 @@ sealed abstract class Type {
     }
     case TVar(n) => ('a' to 'z') (n).toString
   }
-}
-
-object Type {
-  type Context = immutable.Map[Int, Type]
-
-  val empty: Context = immutable.Map()
 }
 
 case object TInt extends Type

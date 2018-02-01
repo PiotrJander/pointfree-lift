@@ -1,8 +1,8 @@
 import lambda._
-import lambda.Type._
 import lambda.Var._
 import lambda.TVar._
 import lambda.Expr._
+import Context._
 import org.junit.Test
 
 class LambdaTest {
@@ -18,9 +18,9 @@ class LambdaTest {
 
   @Test
   def second(): Unit = {
-    println(flatten.typ(empty))
-    println(initsOp.typ(empty))
+//    println(flatten.typ(empty))
+//    println(initsOp.typ(empty))
     println(tailsOp.typ(empty))
-    println(Catamorphism(Identity)(Identity))
+//    println(Catamorphism(Identity)(Identity))
   }
 }

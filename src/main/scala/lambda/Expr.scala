@@ -4,14 +4,14 @@ import scalaz._
 import Scalaz.{tails => _, _}
 import scala.collection.immutable
 import scala.language.postfixOps
-import Type._
 import TVar._
 import Var._
-import pointfree.Expr
-
-import scalaz.Alpha.A
+import com.typesafe.scalalogging.Logger
 
 sealed abstract class Expr {
+  import Expr.loggedExpr
+
+  val log = Logger("Expr")
 
   type Substitution = immutable.Map[Int, Expr]
 
@@ -19,14 +19,24 @@ sealed abstract class Expr {
 
   def apply(e: Expr): Expr = Application(this, e)
 
-  def &:(e: Expr): Expr = Application(e, this)
+  def $(e: Expr): Expr = Application(this, e)
 
   def *:(f: Expr): Expr = u of a lambda this(f(u))
 
   def ++(e: Expr): Expr = Concat(this)(e)
+
+  def logTyping(context: Context, t: Type): Unit = {
+    if (!loggedExpr.contains(this)) {
+      log.debug(s"$context |- $this : $t")
+      loggedExpr += this
+    }
+  }
 }
 
 object Expr {
+
+  val loggedExpr: scala.collection.mutable.Set[Expr] = scala.collection.mutable.Set()
+
   def map(f: Expr): Expr = Catamorphism(Pure *: f)(Concat)
 
   val flatten: Expr = Catamorphism(Identity)(Concat)
@@ -46,17 +56,26 @@ case class Application(f: Expr, e: Expr) extends Expr {
     val renaming = f.typ(context) alphaConversion e.typ(context)
     val TArrow(a, b) = f.typ(context) substitute renaming
     val Some(subst) = a unify e.typ(context)
-    b substitute subst
+    val res = b substitute subst
+    logTyping(context, res)
+    res
   }
 
   override def toString: String = this match {
-    case Application(Application(Catamorphism, g), op) => s"⦇$g, $op⦈"
     case Application(Application(Catamorphism, Identity), Concat) => "flatten"
+    case Application(Application(Catamorphism, g), op) => s"⦇$g, $op⦈"
+    case Application(Pure, e) => s"[$e]"
+    case Application(Concat, x) => s"$x ++"
 //    case Application(Application(Catamorphism, Composition(Singleton, g)), Concat) => s"$g*"
 //    case Application(Application(Fold, (Composition(Singleton, Singleton))), InitsOp) => "inits"
 //    case Application(Application(Fold, (Composition(Singleton, Singleton))), TailsOp) => "tails"
     case _ => s"$f $e"
   }
+
+//  def maybeParen(e: Expr): String = e match {
+//    case _: Lambda | _: Application => s"($e)"
+//    case _ => s"$e"
+//  }
 }
 
 case class Var(n: Int) extends Expr {
@@ -80,7 +99,7 @@ case class VarType(v: Var, t: Type) {
 }
 
 case class Lambda(v: Var, t: Type, body: Expr) extends Expr {
-  override def typ(context: Context): Type = t ->: body.typ(context.updated(v.n, t))
+  override def typ(context: Context): Type = t ->: body.typ(context + (v.n, t))
 
   override def toString: String = s"λ$v. $body"
 }

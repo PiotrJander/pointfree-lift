@@ -10,8 +10,8 @@ class LambdaTest {
   @Test
   def first(): Unit = {
     val expr = Identity *: Identity
-    val e = w of b lambda w
-    println(expr)
+    val e = b lambda v0
+    println(expr.toStringDeBruijn(0))
     println(expr.typ(empty))
     println(e.typ(empty))
   }
@@ -19,8 +19,13 @@ class LambdaTest {
   @Test
   def second(): Unit = {
 //    println(flatten.typ(empty))
-//    println(initsOp.typ(empty))
-    println(tailsOp.typ(empty))
+    println(initsOp.typ(empty))
+//    println(tailsOp.typ(empty))
 //    println(Catamorphism(Identity)(Identity))
+  }
+
+  @Test
+  def deBruijnContext(): Unit = {
+    println(empty + TInt + TFloat)
   }
 }

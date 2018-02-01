@@ -21,13 +21,15 @@ sealed abstract class Expr {
 
   def $(e: Expr): Expr = Application(this, e)
 
-  def *:(f: Expr): Expr = u of a lambda this(f(u))
+  def *:(f: Expr): Expr = a lambda f(this(v0))
 
   def ++(e: Expr): Expr = Concat(this)(e)
 
+  def toStringDeBruijn(level: Int): String = this.toString
+
   def logTyping(context: Context, t: Type): Unit = {
     if (!loggedExpr.contains(this)) {
-      log.debug(s"$context |- $this : $t")
+      log.debug(s"$context |- ${this.toStringDeBruijn(context.length)} : $t")
       loggedExpr += this
     }
   }
@@ -41,11 +43,11 @@ object Expr {
 
   val flatten: Expr = Catamorphism(Identity)(Concat)
 
-  val initsOp: Expr = u of TList(TList(a)) lambda (v of a lambda (u ++ Pure(Last(u) ++ Pure(v))))
+  val initsOp: Expr = TList(TList(a)) lambda (a lambda (v1 ++ Pure(Last(v1) ++ Pure(v0))))
 
   val inits: Expr = Fold(Pure *: Pure)(initsOp)
 
-  val tailsOp: Expr = u of TList(TList(a)) lambda (v of a lambda (map(w lambda (w ++ Pure(v)))(u) ++ Pure(Pure(v))))
+  val tailsOp: Expr = TList(TList(a)) lambda (a lambda (map(TList(a) lambda (v0 ++ Pure(v1)))(v1) ++ Pure(Pure(v0))))
 
   val tails: Expr = Fold(Pure *: Pure)(tailsOp)
 }
@@ -61,15 +63,15 @@ case class Application(f: Expr, e: Expr) extends Expr {
     res
   }
 
-  override def toString: String = this match {
+  override def toStringDeBruijn(level: Int): String = this match {
     case Application(Application(Catamorphism, Identity), Concat) => "flatten"
-    case Application(Application(Catamorphism, g), op) => s"⦇$g, $op⦈"
-    case Application(Pure, e) => s"[$e]"
-    case Application(Concat, x) => s"$x ++"
+    case Application(Application(Catamorphism, g), op) => s"⦇${g.toStringDeBruijn(level)}, ${op.toStringDeBruijn(level)}⦈"
+    case Application(Pure, e) => s"[${e.toStringDeBruijn(level)}]"
+    case Application(Concat, x) => s"${x.toStringDeBruijn(level)} ++"
 //    case Application(Application(Catamorphism, Composition(Singleton, g)), Concat) => s"$g*"
 //    case Application(Application(Fold, (Composition(Singleton, Singleton))), InitsOp) => "inits"
 //    case Application(Application(Fold, (Composition(Singleton, Singleton))), TailsOp) => "tails"
-    case _ => s"$f $e"
+    case _ => s"${f.toStringDeBruijn(level)} ${e.toStringDeBruijn(level)}"
   }
 
 //  def maybeParen(e: Expr): String = e match {
@@ -79,29 +81,21 @@ case class Application(f: Expr, e: Expr) extends Expr {
 }
 
 case class Var(n: Int) extends Expr {
-  override def toString: String = ('a' to 'z') (n).toString
+  override def toStringDeBruijn(level: Int): String = ('x' to 'z') (level - n - 1).toString
 
-  override def typ(context: Context): Type = context.getOrElse(n, a)
-
-  def of(t: Type): VarType = VarType(this, t)
-
-  def lambda(body: Expr) = Lambda(this, a, body)
+  override def typ(context: Context): Type = context(n)
 }
 
 object Var {
-  val u = Var(20)
-  val v = Var(21)
-  val w = Var(22)
+  val v0 = Var(0)
+  val v1 = Var(1)
+  val v2 = Var(2)
 }
 
-case class VarType(v: Var, t: Type) {
-  def lambda(e: Expr): Lambda = Lambda(v, t, e)
-}
+case class Lambda(t: Type, body: Expr) extends Expr {
+  override def typ(context: Context): Type = t ->: body.typ(context + t)
 
-case class Lambda(v: Var, t: Type, body: Expr) extends Expr {
-  override def typ(context: Context): Type = t ->: body.typ(context + (v.n, t))
-
-  override def toString: String = s"λ$v. $body"
+  override def toStringDeBruijn(level: Int): String = s"λ${('x' to 'z')(level)}. ${body.toStringDeBruijn(level + 1)}"
 }
 
 case object Identity extends Expr {

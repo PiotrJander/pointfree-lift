@@ -1,15 +1,15 @@
 package lambda
 
-import scala.collection.immutable
+case class Context(list: List[Type]) {
+  def +(t: Type): Context = Context(t :: list)
 
-case class Context(map: immutable.Map[Int, Type]) {
-  def +(k: Int, t: Type): Context = Context(map + (k -> t))
+  def apply(k: Int): Type = list(k)
 
-  def getOrElse(k: Int, t: Type): Type = map.getOrElse(k, t)
+  def length: Int = list.length
 
-  override def toString: String = map.map({ case (k, t) => s"${TVar(k)} : $t" }).mkString(", ")
+  override def toString: String = list.reverse.zip('a' to 'z').map({ case (x, t) => s"$x : $t" }).mkString(", ")
 }
 
 object Context {
-  val empty: Context = Context(immutable.Map())
+  val empty: Context = Context(TFloat :: TFloat :: Nil)
 }

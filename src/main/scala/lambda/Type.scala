@@ -4,63 +4,60 @@ import pointfree.UnificationException
 
 import scalaz.{State, _}
 import Scalaz.{tails => _, _}
-import Context.empty
 import scala.collection.immutable
 
 
 sealed abstract class Type {
 
-  type Context = immutable.Map[Int, Type]
-
   def ->:(a: Type): Type = TArrow(a, this)
 
-  def typeVariables(): List[Int] = this match {
-    case TList(a) => a.typeVariables()
-    case TPair(a, b) => a.typeVariables() ++ b.typeVariables()
-    case TArrow(a, b) => a.typeVariables() ++ b.typeVariables()
-    case TVar(n) => n :: Nil
-    case _ => Nil
-  }
+//  def typeVariables(): List[Int] = this match {
+//    case TList(a) => a.typeVariables()
+//    case TPair(a, b) => a.typeVariables() ++ b.typeVariables()
+//    case TArrow(a, b) => a.typeVariables() ++ b.typeVariables()
+//    case TVar(n) => n :: Nil
+//    case _ => Nil
+//  }
 
-  def alphaConversion(rhs: Type): Context = {
-    val lhsVars = this.typeVariables().toSet
-    val rhsVars = rhs.typeVariables().toSet
-    val allVars = lhsVars union rhsVars
-    val repeatedVars = lhsVars intersect rhsVars
-    _alpha(allVars.toList, repeatedVars.toList)
-  }
+//  def alphaConversion(rhs: Type): Context = {
+//    val lhsVars = this.typeVariables().toSet
+//    val rhsVars = rhs.typeVariables().toSet
+//    val allVars = lhsVars union rhsVars
+//    val repeatedVars = lhsVars intersect rhsVars
+//    _alpha(allVars.toList, repeatedVars.toList)
+//  }
 
-  def _alpha(all: List[Int], repeated: List[Int]): Context = repeated match {
-    case Nil => immutable.Map()
-    case v :: rest =>
-      val free: Int = (0 until Int.MaxValue).find(!all.contains(_)).get
-      _alpha(free :: all, rest) + (v -> TVar(free))
-  }
+//  def _alpha(all: List[Int], repeated: List[Int]): Context = repeated match {
+//    case Nil => immutable.Map()
+//    case v :: rest =>
+//      val free: Int = (0 until Int.MaxValue).find(!all.contains(_)).get
+//      _alpha(free :: all, rest) + (v -> TVar(free))
+//  }
 
-  def substitute(subst: Context): Type = this match {
-    case TList(a) => TList(a substitute subst)
-    case TPair(a, b) => TPair(a substitute subst, b substitute subst)
-    case TArrow(a, b) => TArrow(a substitute subst, b substitute subst)
-    case TVar(n) => subst.getOrElse(n, this)
-    case _ => this
-  }
+//  def substitute(subst: Context): Type = this match {
+//    case TList(a) => TList(a substitute subst)
+//    case TPair(a, b) => TPair(a substitute subst, b substitute subst)
+//    case TArrow(a, b) => TArrow(a substitute subst, b substitute subst)
+//    case TVar(n) => subst.getOrElse(n, this)
+//    case _ => this
+//  }
 
-  def unify(t: Type): Option[Context] =
-    try {
-      (this _unify t).exec(immutable.Map()).some
-    } catch {
-      case UnificationException => None
-    }
+//  def unify(t: Type): Option[Context] =
+//    try {
+//      (this _unify t).exec(immutable.Map()).some
+//    } catch {
+//      case UnificationException => None
+//    }
 
-  def _unify(t: Type): State[Context, Unit] = (this, t) match {
-    // TODO impl proper unification
-    case (TVar(n), a) => modify(s => s + (n -> a))
-    case (a, TVar(n)) => modify(s => s + (n -> a))
-    case (TList(a), TList(b)) => a _unify b
-    case (TPair(a, b), TPair(c, d)) => (a _unify c) >> (b _unify d)
-    case (TArrow(a, b), TArrow(c, d)) => (a _unify c) >> (b _unify d)
-    case (a, b) => if (a == b) State(s => (s, ())) else throw UnificationException
-  }
+//  def _unify(t: Type): State[Context, Unit] = (this, t) match {
+//    // TODO impl proper unification
+//    case (TVar(n), a) => modify(s => s + (n -> a))
+//    case (a, TVar(n)) => modify(s => s + (n -> a))
+//    case (TList(a), TList(b)) => a _unify b
+//    case (TPair(a, b), TPair(c, d)) => (a _unify c) >> (b _unify d)
+//    case (TArrow(a, b), TArrow(c, d)) => (a _unify c) >> (b _unify d)
+//    case (a, b) => if (a == b) State(s => (s, ())) else throw UnificationException
+//  }
 
 //  def renameAndUnify(t: Type): Option[Substitution] = {
 //    val renaming = this alphaConversion t
@@ -82,6 +79,12 @@ sealed abstract class Type {
   }
 
   def lambda(body: Expr): Lambda = Lambda(this, body)
+}
+
+object Type {
+  type TypeEnv = immutable.Map[TVar, Scheme]
+  type Subst = immutable.Map[TVar, Type]
+
 }
 
 case object TInt extends Type

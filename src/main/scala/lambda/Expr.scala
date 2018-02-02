@@ -61,7 +61,7 @@ object Expr {
 
   val loggedExpr: scala.collection.mutable.Set[Expr] = scala.collection.mutable.Set()
 
-  def map(f: Expr): Expr = Catamorphism(Pure *: f)(Concat)
+  def map(f: Expr): Expr = Catamorphism(Pure *: f)(Concat).reduce
 
   val flatten: Expr = Catamorphism(Identity)(Concat)
 

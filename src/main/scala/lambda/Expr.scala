@@ -6,6 +6,7 @@ import scala.collection.immutable
 import scala.language.postfixOps
 import TVar._
 import Var._
+import Context._
 import com.typesafe.scalalogging.Logger
 
 sealed abstract class Expr {
@@ -29,9 +30,30 @@ sealed abstract class Expr {
 
   def logTyping(context: Context, t: Type): Unit = {
     if (!loggedExpr.contains(this)) {
-      log.debug(s"$context |- ${this.toStringDeBruijn(context.length)} : $t")
+      log.debug(s"${context.toStringContext} |- ${this.toStringDeBruijn(context.length)} : $t")
       loggedExpr += this
     }
+  }
+
+  def reduce: Expr = this match {
+    case Application(Lambda(t, body), e) => body.substitute(0, e).reduceDeBruijnIndex(0)
+    case Application(f, e) => Application(f.reduce, e.reduce)
+    case Lambda(t, body) => Lambda(t, body.reduce)
+    case _ => this
+  }
+
+  def substitute(i: Int, e: Expr): Expr = this match {
+    case Application(f, m) => Application(f.substitute(i, e), m.substitute(i, e))
+    case Lambda(t, body) => Lambda(t, body.substitute(i + 1, e))
+    case Var(n) => if (i == n) e else Var(n)
+    case _ => this
+  }
+
+  def reduceDeBruijnIndex(i: Int): Expr = this match {
+    case Application(f, m) => Application(f.reduceDeBruijnIndex(i), m.reduceDeBruijnIndex(i))
+    case Lambda(t, body) => Lambda(t, body.reduceDeBruijnIndex(i + 1))
+    case Var(n) => if (n > i) Var(n - 1) else Var(n)
+    case _ => this
   }
 }
 
@@ -81,7 +103,7 @@ case class Application(f: Expr, e: Expr) extends Expr {
 }
 
 case class Var(n: Int) extends Expr {
-  override def toStringDeBruijn(level: Int): String = ('x' to 'z') (level - n - 1).toString
+  override def toStringDeBruijn(level: Int): String = ('u' to 'z') (level - n - 1).toString
 
   override def typ(context: Context): Type = context(n)
 }
@@ -93,9 +115,9 @@ object Var {
 }
 
 case class Lambda(t: Type, body: Expr) extends Expr {
-  override def typ(context: Context): Type = t ->: body.typ(context + t)
+  override def typ(context: Context): Type = t ->: body.typ(t :: context)
 
-  override def toStringDeBruijn(level: Int): String = s"λ${('x' to 'z')(level)}. ${body.toStringDeBruijn(level + 1)}"
+  override def toStringDeBruijn(level: Int): String = s"(λ${('u' to 'z')(level)}. ${body.toStringDeBruijn(level + 1)})"
 }
 
 case object Identity extends Expr {

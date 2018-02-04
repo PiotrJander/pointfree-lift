@@ -247,8 +247,9 @@ case class TypeAnnotation(e: Expr, t: Type) extends Expr {
 case class EVar(n: Int) extends Expr
 
 object EVar {
-  val EA = EVar(0)
-  val EB = EVar(1)
-  val EC = EVar(2)
-  val ED = EVar(3)
+  val A = EVar(0)
+  val B = EVar(1)
+  val C = EVar(2)
+  val D = EVar(3)
+  val E = EVar(4)
 }

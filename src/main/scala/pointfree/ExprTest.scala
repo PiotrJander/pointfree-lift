@@ -53,12 +53,12 @@ class ExprTest {
     println((Plus *: Plus *: Plus *: Identity).etaExpansion)
   }
 
-//  @Test
-//  def rewriteMapDistributivity(): Unit = {
-//    val ex = Map(Composition(Plus, Mult))
-//    println(ex)
-//    println(ex.rewrite(Equiv.mapDistributivity))
-//  }
+    @Test
+    def rewriteMapDistributivity(): Unit = {
+      val ex = Map(Composition(Plus, Mult))
+      println(ex)
+      println(ex.rewrite(Equiv.mapDistributivityReverse))
+    }
 
   @Test
   def printPrograms(): Unit = {
@@ -89,12 +89,9 @@ class ExprTest {
       .rewrite(catamorphismPromotion)
       .rewrite(mapDistributesThroughComposition)
       .rewrite(mapDistributesThroughComposition)
-  }
-
-  @Test
-  def identityRewrite(): Unit = {
-    //    println(EA identityRewrite IdentityEquiv.zipUnzip)
-    //    println((EA of (TList(TPair(TInt, TFloat)) ->: TList(TPair(TFloat, TInt)))) identityRewrite IdentityEquiv.zipUnzip)
+      .rewrite(hornersRule)
+      .rewrite(scan)
+      .typecheck()
   }
 
   @Test

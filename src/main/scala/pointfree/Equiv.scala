@@ -11,36 +11,42 @@ case class Equiv(left: Expr, right: Expr, transform: Substitution => Option[Subs
 object Equiv {
 
   val filterMapMultAbsorber: Equiv =
-    Filter(Neq(Zero)) *: Map(Uncurry(Mult *: EA)) *: EB |≡ Map(Uncurry(Mult *: EA)) *: Filter(Neq(Zero) *: Snd) *: EB
+    Filter(Neq(Zero)) *: Map(Uncurry(Mult *: A)) *: B |≡ Map(Uncurry(Mult *: A)) *: Filter(Neq(Zero) *: Snd) *: B
 
   val mapDistributivityReverse: Equiv =
-    Map(Composition(EA, EB)) |≡ Composition(Map(EA), Map(EB))
+    Map(Composition(A, B)) |≡ Composition(Map(A), Map(B))
 
   def splitMapComposition(t: Type): Equiv =
     Map(Composition(
       //      EA of TPair(TList(TInt), TList(TFloat)) ->: TList(TFloat),
-      EA,
-      EB of t
-    )) |≡ Composition(Map(EA), Map(EB))
+      A,
+      B of t
+    )) |≡ Composition(Map(A), Map(B))
 
   val filterSumMonoid: Equiv =
-    Fold(EA) |≡ Fold(EA) *: Filter(Neq(EB)) transforming
-      (s => neutralElement.get(s(EA)).map(neutral => s + (EB.n -> neutral)))
+    Fold(A) |≡ Fold(A) *: Filter(Neq(B)) transforming
+      (s => neutralElement.get(s(A)).map(neutral => s + (B.n -> neutral)))
 
   val mapOverZippedEnumeration: Equiv =
-    Map(Uncurry(EA)) *: EZip(EB) *: EC |≡ Map(Uncurry(EA *: Access(EB))) *: EZip(Enumeration) *: EC
+    Map(Uncurry(A)) *: EZip(B) *: C |≡ Map(Uncurry(A *: Access(B))) *: EZip(Enumeration) *: C
 
   // max seg sum
 
   val mapDistributesThroughComposition: Equiv =
-    Map(EA) *: Map(EB) *: EC |≡ Map(EA *: EB) *: EC
+    Map(A) *: Map(B) *: C |≡ Map(A *: B) *: C
 
   val mapPromotion: Equiv =
-    Map(EA) *: Join *: EB |≡ Join *: Map(Map(EA)) *: EB
+    Map(A) *: Join *: B |≡ Join *: Map(Map(A)) *: B
 
   val catamorphismPromotion: Equiv =
-    Fold(EA) *: Join *: EB |≡ Fold(EA) *: Map(Fold(EA)) *: EB
+    Fold(A) *: Join *: B |≡ Fold(A) *: Map(Fold(A)) *: B
 
+  val hornersRule: Equiv =
+    Fold(A) *: Map(Fold(B)) *: Tails *: C |≡ Fold(B *: A(D)) *: C transforming
+      (s => neutralElement.get(s(B)).map(neutral => s + (D.n -> neutral)))
+
+  val scan: Equiv =
+    Map(Fold(A)) *: Inits *: B |≡ Scan(A) *: B
 }
 
 

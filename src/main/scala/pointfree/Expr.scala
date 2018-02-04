@@ -38,12 +38,16 @@ sealed abstract class Expr {
     case Snd => TPair(A, B) ->: B
     case Plus => TFloat ->: TFloat ->: TFloat
     case Mult => TFloat ->: TFloat ->: TFloat
+    case Max => TFloat ->: TFloat ->: TFloat
     case Zero => TFloat
     case One => TFloat
     case EVector => TList(TFloat)
     case Enumeration => TList(TInt)
+    case Tails => TList(A) ->: TList(TList(A))
+    case Inits => TList(A) ->: TList(TList(A))
+    case Join => TList(TList(A)) ->: TList(A)
+    case Split => TList(A) ->: TList(TList(A))
     case _: Variable => A
-    case _ => this.typ
   }
 
   type Substitution = immutable.Map[Int, Expr]
@@ -210,6 +214,8 @@ case object Plus extends Expr
 
 case object Mult extends Expr
 
+case object Max extends Expr
+
 case object Zero extends Expr
 
 case object One extends Expr
@@ -217,6 +223,14 @@ case object One extends Expr
 case object EVector extends Expr
 
 case object Enumeration extends Expr
+
+case object Inits extends Expr
+
+case object Tails extends Expr
+
+case object Join extends Expr
+
+case object Split extends Expr
 
 case class TypeAnnotation(e: Expr, t: Type) extends Expr {
   override def toString: String = s"($e :: $t)"

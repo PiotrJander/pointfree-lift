@@ -28,7 +28,8 @@ sealed abstract class Expr {
       t substitute subst
     case Identity => A ->: A
     case Map => (A ->: B) ->: TList(A) ->: TList(B)
-    case Reduce => (A ->: A ->: A) ->: TList(A) ->: A
+    case Fold => (A ->: A ->: A) ->: TList(A) ->: A
+    case Scan => (A ->: A ->: A) ->: TList(A) ->: TList(A)
     case Filter => (A ->: TBool) ->: TList(A) ->: TList(A)
     case Uncurry => (A ->: B ->: C) ->: TPair(A, B) ->: C
     case EZip => TList(A) ->: TList(B) ->: TList(TPair(A, B))
@@ -194,7 +195,9 @@ case object Identity extends Expr
 
 case object Map extends Expr
 
-case object Reduce extends Expr
+case object Fold extends Expr
+
+case object Scan extends Expr
 
 case object Filter extends Expr
 

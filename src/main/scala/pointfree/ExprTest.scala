@@ -60,12 +60,12 @@ class ExprTest {
     println((Plus *: Plus *: Plus *: Identity).etaExpansion)
   }
 
-  @Test
-  def rewriteMapDistributivity(): Unit = {
-    val ex = Map(Composition(Plus, Mult))
-    println(ex)
-    println(ex.rewrite(Equiv.mapDistributivity))
-  }
+//  @Test
+//  def rewriteMapDistributivity(): Unit = {
+//    val ex = Map(Composition(Plus, Mult))
+//    println(ex)
+//    println(ex.rewrite(Equiv.mapDistributivity))
+//  }
 
   @Test
   def printPrograms(): Unit = {

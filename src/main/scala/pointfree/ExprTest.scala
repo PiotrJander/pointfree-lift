@@ -90,6 +90,15 @@ class ExprTest {
   }
 
   @Test
+  def rewriteMaxSegSum(): Unit = {
+    (Programs.maxSegSum :: Nil)
+      .rewrite(mapPromotion)
+      .rewrite(catamorphismPromotion)
+      .rewrite(mapDistributesThroughComposition)
+      .rewrite(mapDistributesThroughComposition)
+  }
+
+  @Test
   def identityRewrite(): Unit = {
     //    println(EA identityRewrite IdentityEquiv.zipUnzip)
     //    println((EA of (TList(TPair(TInt, TFloat)) ->: TList(TPair(TFloat, TInt)))) identityRewrite IdentityEquiv.zipUnzip)

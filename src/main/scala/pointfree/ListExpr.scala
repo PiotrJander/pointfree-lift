@@ -6,7 +6,8 @@ object ListExpr {
     def rewrite(equiv: Equiv): List[Expr] = le
       .map(_.normalizeComposition.etaExpansion)
       .flatMap(_ rewrite equiv)
-      .map(_.etaReduction.print())
+      .map(_.etaReduction.normalizeComposition.print())
+      .distinct
 
     def identityRewrite(ident: IdentityEquiv): List[Expr] = le
       .map(_.normalizeComposition)

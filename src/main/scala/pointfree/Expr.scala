@@ -1,7 +1,7 @@
 package pointfree
 
 import scalaz._
-import Scalaz.{tails => _, _}
+import Scalaz._
 import scala.collection.immutable
 import scala.language.postfixOps
 import TVar._
@@ -26,13 +26,7 @@ sealed abstract class Expr {
       val typRenamed = typ substitute renaming
       val Some(subst) = typRenamed unify t
       t substitute subst
-    case Catamorphism => (A ->: B) ->: (B ->: B ->: B) ->: TList(A) ->: B
-    case Fold => (A ->: B) ->: (B ->: A ->: B) ->: TList(A) ->: B
-    case Scan => (A ->: B) ->: (B ->: A ->: B) ->: TList(A) ->: TList(B)
-    case Placeholder => A ->: B
     case Identity => A ->: A
-    case Concat => TList(A) ->: TList(A) ->: TList(A)
-    case Singleton => A ->: TList(A)
     case Map => (A ->: B) ->: TList(A) ->: TList(B)
     case Reduce => (A ->: A ->: A) ->: TList(A) ->: A
     case Filter => (A ->: TBool) ->: TList(A) ->: TList(A)
@@ -168,24 +162,10 @@ sealed abstract class Expr {
 }
 
 object Expr {
-  def map(f: Expr): Expr = Catamorphism(Singleton *: f)(Concat)
-
-  val flatten: Expr = Catamorphism(Identity)(Concat)
-
-  val inits: Expr = Fold(Singleton *: Singleton)(InitsOp)
-
-  val tails: Expr = Fold(Singleton *: Singleton)(TailsOp)
 }
 
 case class Application(f: Expr, e: Expr) extends Expr {
-  override def toString: String = this match {
-    case Application(Application(Catamorphism, Identity), Concat) => "flatten"
-    case Application(Application(Catamorphism, Composition(Singleton, g)), Concat) => s"$g*"
-    case Application(Application(Catamorphism, g), op) => s"(|$g, $op|)"
-    case Application(Application(Fold, (Composition(Singleton, Singleton))), InitsOp) => "inits"
-    case Application(Application(Fold, (Composition(Singleton, Singleton))), TailsOp) => "tails"
-    case _ => s"${compositionParentheses(f)} ${compositionApplicationParentheses(e)}"
-  }
+  override def toString: String = s"${compositionParentheses(f)} ${compositionApplicationParentheses(e)}"
 
   def compositionParentheses(c: Expr): String = c match {
     case c: Composition => s"($c)"
@@ -237,36 +217,6 @@ case object One extends Expr
 case object EVector extends Expr
 
 case object Enumeration extends Expr
-
-case object Catamorphism extends Expr
-
-case object Fold extends Expr
-
-case object Scan extends Expr
-
-case object Placeholder extends Expr
-
-case object Concat extends Expr
-
-case object Singleton extends Expr
-
-/**
-  * foldrOp :: [a] -> b -> [a]
-  * initsOp :: [[ c ]] -> d -> [[ c ]]
-  * initsOp u a = u ++ pure (last u ++ pure a)
-  */
-case object InitsOp extends Expr {
-  override def typ: Type = TList(TList(A)) ->: B ->: TList(TList(A))
-}
-
-/**
-  * foldrOp :: [a] -> b -> [a]
-  * tailsOp :: [[ c ]] -> d -> [[ c ]]
-  * tailsOp z a = map (++ pure a) z ++ pure (pure a)
-  */
-case object TailsOp extends Expr {
-  override def typ: Type = TList(TList(A)) ->: B ->: TList(TList(A))
-}
 
 case class TypeAnnotation(e: Expr, t: Type) extends Expr {
   override def toString: String = s"($e :: $t)"

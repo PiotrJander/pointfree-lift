@@ -37,7 +37,4 @@ object Equiv {
 
   val mapOverZippedEnumeration: Equiv =
     Map(Uncurry(EA)) *: EZip(EB) *: EC |≡ Map(Uncurry(EA *: Access(EB))) *: EZip(Enumeration) *: EC
-
-  val catamorphismPromotionLaw: Equiv =
-    map(EA) *: flatten *: EB |≡ flatten *: map(map(EA)) *: EB
 }

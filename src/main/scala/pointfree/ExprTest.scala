@@ -5,7 +5,7 @@ import org.junit.Test
 import pointfree.Programs.{csrMV, denseMV}
 
 import scalaz._
-import Scalaz.{tails => _, _}
+import Scalaz._
 
 import TVar._
 import EVar._
@@ -101,29 +101,6 @@ class ExprTest {
     println(comp.compositionAssociativity)
   }
 
-  @Test
-  def catamorphismType(): Unit = {
-    println(Catamorphism(Identity)(Concat).typ)
-  }
-
-  @Test
-  def mapPromotion(): Unit = {
-    val lhs = map(Placeholder) *: flatten
-    println(lhs.etaExpansion.rewrite(catamorphismPromotionLaw).head.etaReduction)
-  }
-
-  @Test
-  def foldInitsTails(): Unit = {
-    println(inits)
-    println(inits.typ)
-    println(tails)
-    println(tails.typ)
-  }
-
-  @Test
-  def compileSpeed(): Unit = {
-    println(flatten.typ)
-  }
 }
 
 

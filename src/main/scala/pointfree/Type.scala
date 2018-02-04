@@ -1,7 +1,7 @@
 package pointfree
 
 import scalaz.{State, _}
-import Scalaz.{tails => _, _}
+import Scalaz._
 import scala.collection.immutable
 
 

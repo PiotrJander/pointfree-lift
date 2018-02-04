@@ -1,15 +1,11 @@
 package pointfree
+
 import EVar._
-import TVar._
 import Expr._
+import Ops._
 
-case class Equiv(left: Expr, right: Expr) {
-  def types: (Type, Type) = (left.typ, right.typ)
-
-  def printTypes(): Unit = {
-    val (l, r) = types
-    println(s"Left: $l right: $r")
-  }
+case class Equiv(left: Expr, right: Expr, transform: Substitution => Option[Substitution]) {
+  def transforming(f: Substitution => Option[Substitution]) = Equiv(left, right, f)
 }
 
 object Equiv {
@@ -22,18 +18,14 @@ object Equiv {
 
   def splitMapComposition(t: Type): Equiv =
     Map(Composition(
-//      EA of TPair(TList(TInt), TList(TFloat)) ->: TList(TFloat),
+      //      EA of TPair(TList(TInt), TList(TFloat)) ->: TList(TFloat),
       EA,
       EB of t
     )) |≡ Composition(Map(EA), Map(EB))
 
-  private def monoidNeutral(e: Expr): Expr = e match {
-    case Plus => Zero
-    case Mult => One
-  }
-
   val filterSumMonoid: Equiv =
-    Fold(EA) |≡ Fold(EA) *: Filter(Neq(EA.function(monoidNeutral)))
+    Fold(EA) |≡ Fold(EA) *: Filter(Neq(EB)) transforming
+      (s => neutralElement.get(s(EA)).map(neutral => s + (EB.n -> neutral)))
 
   val mapOverZippedEnumeration: Equiv =
     Map(Uncurry(EA)) *: EZip(EB) *: EC |≡ Map(Uncurry(EA *: Access(EB))) *: EZip(Enumeration) *: EC

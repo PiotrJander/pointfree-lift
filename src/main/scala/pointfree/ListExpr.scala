@@ -1,8 +1,14 @@
 package pointfree
 
-object ListExpr {
+import Expr.Substitution
 
-  implicit class ListExprOps(val le: List[Expr]) {
+object Ops {
+
+  implicit class SubstitutionOps(s: Substitution) {
+    def apply(v: EVar): Expr = s(v.n)
+  }
+
+  implicit class ListExprOps(le: List[Expr]) {
     def rewrite(equiv: Equiv): List[Expr] = le
       .map(_.normalizeComposition.etaExpansion)
       .flatMap(_ rewrite equiv)

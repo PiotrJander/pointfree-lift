@@ -1,12 +1,14 @@
 package pointfree
 
-import scalaz._
-import Scalaz._
+import pointfree.TVar._
+
 import scala.collection.immutable
 import scala.language.postfixOps
-import TVar._
+import scalaz.Scalaz._
+import scalaz._
 
 sealed abstract class Expr {
+  import Expr._
 
   def typ: Type = this match {
     case Application(f, e) =>
@@ -48,10 +50,8 @@ sealed abstract class Expr {
     case Inits => TList(A) ->: TList(TList(A))
     case Join => TList(TList(A)) ->: TList(A)
     case Split => TList(A) ->: TList(TList(A))
-    case _: Variable => A
+    case _: EVar => A
   }
-
-  type Substitution = immutable.Map[Int, Expr]
 
   def unify(e: Expr): Option[Substitution] = {
     try {
@@ -62,7 +62,7 @@ sealed abstract class Expr {
   }
 
   def _unify(e: Expr): State[Substitution, Unit] = (this, e) match {
-    case (Variable(n), a) => modify(_ + (n -> a))
+    case (EVar(n), a) => modify(_ + (n -> a))
     case (TypeAnnotation(expr, t), a) =>
       t renameAndUnify a.typ match {
         case Some(_) => expr _unify a
@@ -75,7 +75,6 @@ sealed abstract class Expr {
 
   def substitute(s: Substitution): Expr = this match {
     case EVar(n) => s(n)
-    case FunctionVar(n, f) => f(s(n))
     case Application(f, e) => Application(f substitute s, e substitute s)
     case Composition(f, g) => Composition(f substitute s, g substitute s)
     case _ => this
@@ -87,7 +86,7 @@ sealed abstract class Expr {
 
   def of(t: Type): Expr = TypeAnnotation(this, t)
 
-  def |≡(expr: Expr): Equiv = Equiv(this, expr)
+  def |≡(expr: Expr): Equiv = Equiv(this, expr, s => s.some)
 
   def print(): Expr = {
     println(this)
@@ -127,8 +126,8 @@ sealed abstract class Expr {
     * Non-deterministic rewrite. Returns a list of all possible applications of the re-write.
     */
   def rewrite(equiv: Equiv): List[Expr] = {
-    val Equiv(lhs, rhs) = equiv
-    (lhs unify this).map(rhs substitute).toList ++ // rewrites this
+    val Equiv(lhs, rhs, transform) = equiv
+    (lhs unify this).flatMap(transform).map(rhs substitute).toList ++ // rewrites this
       (this match { // recurse
         case Application(f, e) => combinations(f, e, f rewrite equiv, e rewrite equiv, Application)
         case Composition(f, g) => combinations(f, g, f rewrite equiv, g rewrite equiv, Composition)
@@ -167,6 +166,12 @@ sealed abstract class Expr {
 }
 
 object Expr {
+  type Substitution = immutable.Map[Int, Expr]
+
+  val neutralElement: immutable.Map[Expr, Expr] = immutable.Map(
+    Plus -> Zero,
+    Mult -> One
+  )
 }
 
 case class Application(f: Expr, e: Expr) extends Expr {
@@ -239,25 +244,7 @@ case class TypeAnnotation(e: Expr, t: Type) extends Expr {
   override def toString: String = s"($e :: $t)"
 }
 
-trait Variable {
-  val m: Int
-
-  override def toString: String = ('A' to 'Z') (m).toString
-}
-
-object Variable {
-  def unapply(v: Variable): Option[Int] = v.m.some
-}
-
-case class EVar(n: Int) extends Expr with Variable {
-  override val m: Int = n
-
-  def function(f: Expr => Expr): FunctionVar = FunctionVar(n, f)
-}
-
-case class FunctionVar(n: Int, f: Expr => Expr) extends Expr with Variable {
-  override val m: Int = n
-}
+case class EVar(n: Int) extends Expr
 
 object EVar {
   val EA = EVar(0)

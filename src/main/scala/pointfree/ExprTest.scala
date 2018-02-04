@@ -1,18 +1,11 @@
 package pointfree
 
-//import org.junit.Assert.{assertArrayEquals, assertEquals}
 import org.junit.Test
+import pointfree.Equiv._
+import pointfree.IdentityEquiv._
+import pointfree.Ops._
 import pointfree.Programs.{csrMV, denseMV}
-
-import scalaz._
-import Scalaz._
-
-import TVar._
-import EVar._
-import ListExpr.ListExprOps
-import Equiv._
-import IdentityEquiv._
-import Expr._
+import pointfree.TVar._
 
 class ExprTest {
 

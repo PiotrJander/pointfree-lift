@@ -82,7 +82,7 @@ sealed abstract class Type {
 }
 
 object Type {
-  type TypeEnv = immutable.Map[TVar, Scheme]
+  type TypeEnv = immutable.Map[Var, Scheme]  // TODO
   type Subst = immutable.Map[TVar, Type]
 
 }

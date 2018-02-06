@@ -95,6 +95,11 @@ class ExprTest {
   }
 
   @Test
+  def rewriteMssPar(): Unit = {
+    println(Programs.mssHomomorphism.typ)
+  }
+
+  @Test
   def compositionAssociativity(): Unit = {
     val comp = Plus *: Plus *: Plus *: Plus
     println(comp.compositionAssociativity)

@@ -106,6 +106,10 @@ sealed abstract class Type {
   }
 }
 
+object Type {
+  def Quad(a: Type, b: Type, c: Type, d: Type): Type = TPair(a, TPair(b, TPair(c, d)))
+}
+
 case object TInt extends Type
 
 case object TFloat extends Type

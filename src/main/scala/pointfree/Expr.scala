@@ -6,6 +6,7 @@ import scala.collection.immutable
 import scala.language.postfixOps
 import scalaz.Scalaz._
 import scalaz._
+import Type._
 
 sealed abstract class Expr {
   import Expr._
@@ -50,6 +51,11 @@ sealed abstract class Expr {
     case Inits => TList(A) ->: TList(TList(A))
     case Join => TList(TList(A)) ->: TList(A)
     case Split => TList(A) ->: TList(TList(A))
+    case MssMap => TFloat ->: Quad(TFloat, TFloat, TFloat, TFloat)
+    case MssFold =>
+      val q = Quad(TFloat, TFloat, TFloat, TFloat)
+      q ->: q ->: q
+    case MssExtract => Quad(TFloat, TFloat, TFloat, TFloat) ->: TFloat
     case _: EVar => A
   }
 
@@ -239,6 +245,12 @@ case object Tails extends Expr
 case object Join extends Expr
 
 case object Split extends Expr
+
+case object MssMap extends Expr
+
+case object MssFold extends Expr
+
+case object MssExtract extends Expr
 
 case class TypeAnnotation(e: Expr, t: Type) extends Expr {
   override def toString: String = s"($e :: $t)"

@@ -18,4 +18,6 @@ object Programs {
   val segs: Expr = Join *: Map(Tails) *: Inits
 
   val maxSegSum: Expr = Fold(Max) *: Map(Fold(Plus)) *: segs
+
+  val mssHomomorphism: Expr = MssExtract *: Fold(MssFold) *: Map(MssMap)
 }

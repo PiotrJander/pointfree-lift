@@ -97,6 +97,10 @@ class ExprTest {
   @Test
   def rewriteMssPar(): Unit = {
     println(Programs.mssHomomorphism.typ)
+    (Programs.mssHomomorphism :: Nil)
+      .rewrite(catamorphimsPromotion)
+      .rewrite(catamorphimsPromotion)
+      .typecheck()
   }
 
   @Test

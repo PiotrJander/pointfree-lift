@@ -21,3 +21,12 @@ object Programs {
 
   val mssHomomorphism: Expr = MssExtract *: Fold(MssFold) *: Map(MssMap)
 }
+
+
+
+
+
+
+
+
+

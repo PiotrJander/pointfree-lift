@@ -47,6 +47,16 @@ object Equiv {
 
   val scan: Equiv =
     Map(Fold(A)) *: Inits *: B |≡ Scan(A) *: B
+
+  /**
+    * This rewrite is only valid for list catamorphisms, not for arbitrary compositions
+    * of map reduce.
+    *
+    * TODO Cole paper: can we obtain the required additional baggage automatically?
+    * or just generalize for segment sum problems?
+    */
+  val catamorphimsPromotion: Equiv =
+    Fold(A) *: Map(B) *: C |≡ Fold(A) *: Map(Fold(A) *: Map(B)) *: Split *: C
 }
 
 

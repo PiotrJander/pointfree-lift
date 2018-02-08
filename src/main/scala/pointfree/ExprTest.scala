@@ -109,6 +109,20 @@ class ExprTest {
     println(comp.compositionAssociativity)
   }
 
+  @Test
+  def densePair(): Unit = {
+    println(Programs.densePair.typ)
+  }
+
+  @Test
+  def denseToBsr(): Unit = {
+    println(Programs.denseToBSr.typ)
+  }
+
+  @Test
+  def bsrMV(): Unit = {
+    println(Programs.bsrMV.typ)
+  }
 }
 
 

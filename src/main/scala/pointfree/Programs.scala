@@ -20,6 +20,18 @@ object Programs {
   val maxSegSum: Expr = Fold(Max) *: Map(Fold(Plus)) *: segs
 
   val mssHomomorphism: Expr = MssExtract *: Fold(MssFold) *: Map(MssMap)
+
+  val densePair: Expr =
+    Curry(Map(Fold(Plus)) *: Map(Map(Uncurry(Mult))) *: Map(Uncurry(EZip)) *: Uncurry(EZip))
+
+  val denseToBSr: Expr =
+    Map(Filter(NonZeroMatrix *: Snd)) *: Map(EZip(Enumeration)) *: Map(Map(Transpose) *: Split *: Transpose) *: Split
+
+  val bsrMV: Expr =
+    Join *: Map(Map(Fold(Plus)) *: Transpose *: Map(Uncurry(densePair *: Repeat *: Access(Split(EVector)))))
+
+  val vsrConvertThenMV: Expr =
+    bsrMV *: denseToBSr
 }
 
 

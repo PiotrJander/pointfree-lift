@@ -34,6 +34,7 @@ sealed abstract class Expr {
     case Fold => (A ->: A ->: A) ->: TList(A) ->: A
     case Scan => (A ->: A ->: A) ->: TList(A) ->: TList(A)
     case Filter => (A ->: TBool) ->: TList(A) ->: TList(A)
+    case Curry => (TPair(A, B) ->: C) ->: A ->: B ->: C
     case Uncurry => (A ->: B ->: C) ->: TPair(A, B) ->: C
     case EZip => TList(A) ->: TList(B) ->: TList(TPair(A, B))
     case Unzip => TList(TPair(A, B)) ->: TPair(TList(A), TList(B))
@@ -56,6 +57,11 @@ sealed abstract class Expr {
       val q = Quad(TFloat, TFloat, TFloat, TFloat)
       q ->: q ->: q
     case MssExtract => Quad(TFloat, TFloat, TFloat, TFloat) ->: TFloat
+    case Repeat => A ->: TList(A)
+    case FMap => (A ->: B) ->: TPair(A, C) ->: TPair(B, C)
+    case SMap => (A ->: B) ->: TPair(C, A) ->: TPair(C, B)
+    case NonZeroMatrix => TList(TList(TFloat)) ->: TBool
+    case Transpose => TList(TList(A)) ->: TList(TList(A))
     case _: EVar => A
   }
 
@@ -212,6 +218,8 @@ case object Scan extends Expr
 
 case object Filter extends Expr
 
+case object Curry extends Expr
+
 case object Uncurry extends Expr
 
 case object EZip extends Expr
@@ -251,6 +259,16 @@ case object MssMap extends Expr
 case object MssFold extends Expr
 
 case object MssExtract extends Expr
+
+case object Repeat extends Expr
+
+case object FMap extends Expr
+
+case object SMap extends Expr
+
+case object NonZeroMatrix extends Expr
+
+case object Transpose extends Expr
 
 case class TypeAnnotation(e: Expr, t: Type) extends Expr {
   override def toString: String = s"($e :: $t)"

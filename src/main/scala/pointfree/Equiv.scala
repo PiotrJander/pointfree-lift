@@ -24,7 +24,7 @@ object Equiv {
     )) |≡ Composition(Map(A), Map(B))
 
   val filterSumMonoid: Equiv =
-    Fold(A) |≡ Fold(A) *: Filter(Neq(B)) transforming
+    Reduce(A) |≡ Reduce(A) *: Filter(Neq(B)) transforming
       (s => neutralElement.get(s(A)).map(neutral => s + (B.n -> neutral)))
 
   val mapOverZippedEnumeration: Equiv =
@@ -39,14 +39,14 @@ object Equiv {
     Map(A) *: Join *: B |≡ Join *: Map(Map(A)) *: B
 
   val catamorphismPromotion: Equiv =
-    Fold(A) *: Join *: B |≡ Fold(A) *: Map(Fold(A)) *: B
+    Reduce(A) *: Join *: B |≡ Reduce(A) *: Map(Reduce(A)) *: B
 
   val hornersRule: Equiv =
-    Fold(A) *: Map(Fold(B)) *: Tails *: C |≡ Fold(B *: A(D)) *: C transforming
+    Reduce(A) *: Map(Reduce(B)) *: Tails *: C |≡ Reduce(B *: A(D)) *: C transforming
       (s => neutralElement.get(s(B)).map(neutral => s + (D.n -> neutral)))
 
   val scan: Equiv =
-    Map(Fold(A)) *: Inits *: B |≡ Scan(A) *: B
+    Map(Reduce(A)) *: Inits *: B |≡ Scan(A) *: B
 
   /**
     * This rewrite is only valid for list catamorphisms, not for arbitrary compositions
@@ -56,7 +56,7 @@ object Equiv {
     * or just generalize for segment sum problems?
     */
   val catamorphimsPromotion: Equiv =
-    Fold(A) *: Map(B) *: C |≡ Fold(A) *: Map(Fold(A) *: Map(B)) *: Split *: C
+    Reduce(A) *: Map(B) *: C |≡ Reduce(A) *: Map(Reduce(A) *: Map(B)) *: Split *: C
 }
 
 

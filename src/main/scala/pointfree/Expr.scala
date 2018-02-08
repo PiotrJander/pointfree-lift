@@ -31,7 +31,7 @@ sealed abstract class Expr {
       t substitute subst
     case Identity => A ->: A
     case Map => (A ->: B) ->: TList(A) ->: TList(B)
-    case Fold => (A ->: A ->: A) ->: TList(A) ->: A
+    case Reduce => (A ->: A ->: A) ->: TList(A) ->: A
     case Scan => (A ->: A ->: A) ->: TList(A) ->: TList(A)
     case Filter => (A ->: TBool) ->: TList(A) ->: TList(A)
     case Curry => (TPair(A, B) ->: C) ->: A ->: B ->: C
@@ -187,7 +187,7 @@ object Expr {
     Mult -> One
   )
 
-  def broadcastPredicate(p: Expr): Expr = Fold(And) *: Map(p)
+  def broadcastPredicate(p: Expr): Expr = Reduce(And) *: Map(p)
 }
 
 case class Application(f: Expr, e: Expr) extends Expr {
@@ -216,7 +216,7 @@ case object Identity extends Expr
 
 case object Map extends Expr
 
-case object Fold extends Expr
+case object Reduce extends Expr
 
 case object Scan extends Expr
 

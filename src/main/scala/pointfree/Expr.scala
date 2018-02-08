@@ -41,6 +41,7 @@ sealed abstract class Expr {
     case Access => TList(A) ->: TInt ->: A
     case Neq => A ->: A ->: TBool
     case Snd => TPair(A, B) ->: B
+    case And => TBool ->: TBool ->: TBool
     case Plus => TFloat ->: TFloat ->: TFloat
     case Mult => TFloat ->: TFloat ->: TFloat
     case Max => TFloat ->: TFloat ->: TFloat
@@ -52,17 +53,18 @@ sealed abstract class Expr {
     case Inits => TList(A) ->: TList(TList(A))
     case Join => TList(TList(A)) ->: TList(A)
     case Split => TList(A) ->: TList(TList(A))
+    case Repeat => A ->: TList(A)
+    case Lift => (A ->: A ->: A) ->: TList(A) ->: TList(A) ->: TList(A)
+    case FMap => (A ->: B) ->: TPair(A, C) ->: TPair(B, C)
+    case SMap => (A ->: B) ->: TPair(C, A) ->: TPair(C, B)
+    case Transpose => TList(TList(A)) ->: TList(TList(A))
+    case _: EVar => A
+
     case MssMap => TFloat ->: Quad(TFloat, TFloat, TFloat, TFloat)
     case MssFold =>
       val q = Quad(TFloat, TFloat, TFloat, TFloat)
       q ->: q ->: q
     case MssExtract => Quad(TFloat, TFloat, TFloat, TFloat) ->: TFloat
-    case Repeat => A ->: TList(A)
-    case FMap => (A ->: B) ->: TPair(A, C) ->: TPair(B, C)
-    case SMap => (A ->: B) ->: TPair(C, A) ->: TPair(C, B)
-    case NonZeroMatrix => TList(TList(TFloat)) ->: TBool
-    case Transpose => TList(TList(A)) ->: TList(TList(A))
-    case _: EVar => A
   }
 
   def unify(e: Expr): Option[Substitution] = {
@@ -184,6 +186,8 @@ object Expr {
     Plus -> Zero,
     Mult -> One
   )
+
+  def broadcastPredicate(p: Expr): Expr = Fold(And) *: Map(p)
 }
 
 case class Application(f: Expr, e: Expr) extends Expr {
@@ -232,6 +236,8 @@ case object Neq extends Expr
 
 case object Snd extends Expr
 
+case object And extends Expr
+
 case object Plus extends Expr
 
 case object Mult extends Expr
@@ -254,21 +260,21 @@ case object Join extends Expr
 
 case object Split extends Expr
 
-case object MssMap extends Expr
-
-case object MssFold extends Expr
-
-case object MssExtract extends Expr
-
 case object Repeat extends Expr
+
+case object Lift extends Expr
 
 case object FMap extends Expr
 
 case object SMap extends Expr
 
-case object NonZeroMatrix extends Expr
-
 case object Transpose extends Expr
+
+case object MssMap extends Expr
+
+case object MssFold extends Expr
+
+case object MssExtract extends Expr
 
 case class TypeAnnotation(e: Expr, t: Type) extends Expr {
   override def toString: String = s"($e :: $t)"

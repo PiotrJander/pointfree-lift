@@ -1,5 +1,7 @@
 package pointfree
 
+import Expr.broadcastPredicate
+
 object Programs {
 
   //  val denseMV: Expr = Map(Reduce(Plus) *: Map(Uncurry(Mult)) *: EZip(EVector) *: (Identity of TList(TFloat) ->: TList(TFloat)))
@@ -22,15 +24,18 @@ object Programs {
   val mssHomomorphism: Expr = MssExtract *: Fold(MssFold) *: Map(MssMap)
 
   val densePair: Expr =
-    Curry(Map(Fold(Plus)) *: Map(Map(Uncurry(Mult))) *: Map(Uncurry(EZip)) *: Uncurry(EZip))
+    Curry(Map(Fold(Plus)) *: Map(Map(Uncurry(Mult))) *: Map(Uncurry(EZip)) *: Uncurry(EZip)) *: Repeat
+
+  val nonZeroMatrix: Expr =
+    broadcastPredicate(broadcastPredicate(Neq(Zero)))
 
   val denseToBSr: Expr =
-    Map(Filter(NonZeroMatrix *: Snd)) *: Map(EZip(Enumeration)) *: Map(Map(Transpose) *: Split *: Transpose) *: Split
+    Map(Filter(nonZeroMatrix *: Snd)) *: Map(EZip(Enumeration)) *: Map(Map(Transpose) *: Split *: Transpose) *: Split
 
   val bsrMV: Expr =
-    Join *: Map(Map(Fold(Plus)) *: Transpose *: Map(Uncurry(densePair *: Repeat *: Access(Split(EVector)))))
+    Join *: Map(Fold(Lift(Plus)) *: Map(Uncurry(densePair *: Access(Split(EVector)))))
 
-  val vsrConvertThenMV: Expr =
+  val bsrConvertThenMV: Expr =
     bsrMV *: denseToBSr
 }
 

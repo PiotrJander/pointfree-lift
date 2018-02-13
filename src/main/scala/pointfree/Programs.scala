@@ -17,6 +17,9 @@ object Programs {
           EZip(Enumeration)
       )
 
+  val bsrMV: Expr =
+    Join *: Map(Reduce(Lift(Plus)) *: Map(Uncurry(densePair *: Access(Split(EVector)))))
+
   val segs: Expr = Join *: Map(Tails) *: Inits
 
   val maxSegSum: Expr = Reduce(Max) *: Map(Reduce(Plus)) *: segs
@@ -31,9 +34,6 @@ object Programs {
 
   val denseToBSr: Expr =
     Map(Filter(nonZeroMatrix *: Snd)) *: Map(EZip(Enumeration)) *: Map(Map(Transpose) *: Split *: Transpose) *: Split
-
-  val bsrMV: Expr =
-    Join *: Map(Reduce(Lift(Plus)) *: Map(Uncurry(densePair *: Access(Split(EVector)))))
 
   val bsrConvertThenMV: Expr =
     bsrMV *: denseToBSr

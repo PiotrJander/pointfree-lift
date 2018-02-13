@@ -100,8 +100,6 @@ sealed abstract class Expr {
 
   def of(t: Type): Expr = TypeAnnotation(this, t)
 
-  def |≡(expr: Expr): Equiv = Equiv(this, expr, s => s.some)
-
   def print(): Expr = {
     println(this)
     this

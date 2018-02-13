@@ -53,12 +53,12 @@ class ExprTest {
     println((Plus *: Plus *: Plus *: Identity).etaExpansion)
   }
 
-    @Test
-    def rewriteMapDistributivity(): Unit = {
-      val ex = Map(Composition(Plus, Mult))
-      println(ex)
-      println(ex.rewrite(Equiv.mapDistributivityReverse))
-    }
+  @Test
+  def rewriteMapDistributivity(): Unit = {
+    val ex = Map(Composition(Plus, Mult))
+    println(ex)
+    println(ex.rewrite(Equiv.mapDistributivityReverse))
+  }
 
   @Test
   def printPrograms(): Unit = {
@@ -85,12 +85,13 @@ class ExprTest {
   @Test
   def rewriteMaxSegSum(): Unit = {
     (Programs.maxSegSum :: Nil)
+      .tap(println)
       .rewrite(mapPromotion)
       .rewrite(catamorphismPromotion)
       .rewrite(mapDistributesThroughComposition)
       .rewrite(mapDistributesThroughComposition)
       .rewrite(hornersRule)
-      .rewrite(scan)
+      .rewrite(foldToScan)
       .typecheck()
   }
 

@@ -54,13 +54,6 @@ class ExprTest {
   }
 
   @Test
-  def rewriteMapDistributivity(): Unit = {
-    val ex = Map(Composition(Plus, Mult))
-    println(ex)
-    println(ex.rewrite(Equiv.mapDistributivityReverse))
-  }
-
-  @Test
   def printPrograms(): Unit = {
     println(Programs.denseMV)
     println(Programs.csrMV)

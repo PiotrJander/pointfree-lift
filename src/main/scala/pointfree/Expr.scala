@@ -138,7 +138,7 @@ sealed abstract class Expr {
     * Non-deterministic rewrite. Returns a list of all possible applications of the re-write.
     */
   def rewrite(equiv: Equiv): List[Expr] = {
-    val Equiv(lhs, rhs, transform) = equiv
+    val Equiv(_, lhs, rhs, transform) = equiv
     (lhs unify this).flatMap(transform).map(rhs substitute).toList ++ // rewrites this
       (this match { // recurse
         case Application(f, e) => combinations(f, e, f rewrite equiv, e rewrite equiv, Application)

@@ -8,7 +8,7 @@ case class Equiv(name: String, left: Expr, right: Expr, transform: Substitution 
 
 object Equiv {
 
-  def apply(name: String, left: Expr, right: Expr) = Equiv(name, left, right, s => Some(s))
+  def apply(name: String, left: Expr, right: Expr): Equiv = Equiv(name, left, right, s => Some(s))
 
   val filterMapMultAbsorber = Equiv(
     name = "filter map mult absorber",
@@ -16,9 +16,15 @@ object Equiv {
     right = Map(Uncurry(Mult *: A)) *: Filter(Neq(Zero) *: Snd) *: B
   )
 
-  val mapDistributivityReverse = Equiv(
-    name = "map distributes backwards through composition, reverse",
-    left = Map(Composition(A, B)),
+//  val mapDistributivityReverse = Equiv(
+//    name = "map distributes backwards through composition, reverse",
+//    left = Map(Composition(A, B)),
+//    right = Composition(Map(A), Map(B))
+//  )
+
+  def splitMapComposition(t: Type) = Equiv(
+    name = s"split name composition at type $t",
+    left = Map(Composition(A, B of t)),
     right = Composition(Map(A), Map(B))
   )
 

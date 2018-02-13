@@ -14,7 +14,7 @@ object Ops {
       .flatMap(_ rewrite equiv)
       .map(_.etaReduction.normalizeComposition.print())
       .distinct
-      .tap(_ => println(s"= {  }"))
+      .tap(_ => println(s"= { ${equiv.name} }"))
 
     def identityRewrite(ident: IdentityEquiv): List[Expr] = le
       .map(_.normalizeComposition)
@@ -27,8 +27,8 @@ object Ops {
       .flatMap(_ rewrite equiv)
       .map(_.print())
 
-    def tap(f: Expr => Unit): List[Expr] = {
-      le.foreach(f(_))
+    def tap(f: List[Expr] => Unit): List[Expr] = {
+      f(le)
       le
     }
 

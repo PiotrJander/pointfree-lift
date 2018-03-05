@@ -40,6 +40,9 @@ object Programs {
 
   val binaryHypeproduct: Expr =
     Foldr(Zero)(mult) *: Tri(Square)
+
+  val iai: Expr =
+    Foldr(Pair(Zero)(Zero))(PlusElemwise) *: Tri(AddSelf) *: Map(Split(Const(Zero))(Identity))
 }
 
 

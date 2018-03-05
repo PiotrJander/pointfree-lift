@@ -126,6 +126,11 @@ class ExprTest {
         .rewrite(birdsHornersRule)
         .typecheck()
   }
+
+  @Test
+  def iai(): Unit = {
+    println(Programs.iai.typ)
+  }
 }
 
 

@@ -49,7 +49,7 @@ sealed abstract class Expr {
     case Mult => TFloat ->: TFloat ->: TFloat
     case Max => TFloat ->: TFloat ->: TFloat
     case Square => TFloat ->: TFloat
-//    case Pair => A ->: B ->: TPair(A, B)
+    case Pair => A ->: B ->: TPair(A, B)
     case Zero => TFloat
     case One => TFloat
     case EVector => TList(TFloat)
@@ -63,6 +63,10 @@ sealed abstract class Expr {
     case FMap => (A ->: B) ->: TPair(A, C) ->: TPair(B, C)
     case SMap => (A ->: B) ->: TPair(C, A) ->: TPair(C, B)
     case Transpose => TList(TList(A)) ->: TList(TList(A))
+    case Const => A ->: B ->: A
+    case Split => (A ->: B) ->: (A ->: C) ->: A ->: TPair(B, C)
+    case AddSelf => TPair(TFloat, TFloat) ->: TPair(TFloat, TFloat)
+    case PlusElemwise => TPair(TPair(TFloat, TFloat), TPair(TFloat, TFloat)) ->: TPair(TFloat, TFloat)
     case _: EVar => A
 
     case MssMap => TFloat ->: Quad(TFloat, TFloat, TFloat, TFloat)
@@ -303,7 +307,13 @@ case object Tri extends Expr
 
 case object Square extends Expr
 
-//case object Pair extends Expr
+case object Pair extends Expr
+
+case object Const extends Expr
+
+case object AddSelf extends Expr
+
+case object PlusElemwise extends Expr
 
 case class TypeAnnotation(e: Expr, t: Type) extends Expr {
   override def toString: String = s"($e :: $t)"

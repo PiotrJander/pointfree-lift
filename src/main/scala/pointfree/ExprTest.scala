@@ -117,6 +117,15 @@ class ExprTest {
   def bsrMV(): Unit = {
     println(Programs.bsrMV.typ)
   }
+
+  @Test
+  def binHyperprod(): Unit = {
+    println(Programs.binaryHypeproduct.typ)
+    (Programs.binaryHypeproduct :: Nil)
+        .tap(println)
+        .rewrite(birdsHornersRule)
+        .typecheck()
+  }
 }
 
 

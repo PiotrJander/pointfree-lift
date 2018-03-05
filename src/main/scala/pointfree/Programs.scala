@@ -37,6 +37,9 @@ object Programs {
 
   val bsrConvertThenMV: Expr =
     bsrMV *: denseToBSr
+
+  val binaryHypeproduct: Expr =
+    Foldr(Zero)(Mult) *: Tri(Square)
 }
 
 

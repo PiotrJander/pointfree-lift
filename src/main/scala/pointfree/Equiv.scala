@@ -4,6 +4,9 @@ import pointfree.EVar._
 import pointfree.Expr._
 import pointfree.Ops._
 
+import scalaz._
+import Scalaz._
+
 case class Equiv(name: String, left: Expr, right: Expr, transform: Substitution => Option[Substitution])
 
 object Equiv {
@@ -66,6 +69,13 @@ object Equiv {
     left = Reduce(A) *: Map(Reduce(B)) *: Tails *: C,
     right = Reduce(B *: A(D)) *: C,
     transform = s => neutralElement.get(s(B)).map(neutral => s + (D.n -> neutral))
+  )
+
+  val birdsHornersRule = Equiv(
+    name = "Bird's Honer's rule",
+    left = Foldr(A)(B) *: Tri(C) *: D,
+    right = Foldr(A)(Uncurry(B) *: Bimap(Identity)(C)) *: D,
+    transform = s => { distributivity.contains((s(C), s(B))).option(s) }
   )
 
   val foldToScan = Equiv(

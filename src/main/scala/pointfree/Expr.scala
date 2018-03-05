@@ -32,7 +32,7 @@ sealed abstract class Expr {
     case Identity => A ->: A
     case Map => (A ->: B) ->: TList(A) ->: TList(B)
     case Reduce => (A ->: A ->: A) ->: TList(A) ->: A
-    case Foldr => B ->: (A ->: B ->: B) ->: TList(A) ->: B
+    case Foldr => B ->: (TPair(A, B) ->: B) ->: TList(A) ->: B
     case Bimap => (A ->: C) ->: (B ->: D) ->: TPair(A, B) ->: TPair(C, D)
     case Tri => (A ->: A) ->: TList(A) ->: TList(A)
     case Scan => (A ->: A ->: A) ->: TList(A) ->: TList(A)
@@ -193,14 +193,14 @@ object Expr {
     * Uncurried functions: names start with lowercase
     */
 
-//  val mult: Expr = Uncurry(Mult)
+  val mult: Expr = Uncurry(Mult)
 
   /**
     * Algebraic properties tables: neutral elements, distributivity, etc
     */
 
   val distributivity: List[(Expr, Expr)] = List(
-    (Square, Mult)
+    (Square, mult)
   )
 
   val neutralElement: immutable.Map[Expr, Expr] = immutable.Map(

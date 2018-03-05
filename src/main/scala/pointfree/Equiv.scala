@@ -72,9 +72,9 @@ object Equiv {
   )
 
   val birdsHornersRule = Equiv(
-    name = "Bird's Honer's rule",
+    name = "Bird's Horner's rule",
     left = Foldr(A)(B) *: Tri(C) *: D,
-    right = Foldr(A)(Uncurry(B) *: Bimap(Identity)(C)) *: D,
+    right = Foldr(A)(B *: Bimap(Identity)(C)) *: D,
     transform = s => { distributivity.contains((s(C), s(B))).option(s) }
   )
 

@@ -1,6 +1,6 @@
 package pointfree
 
-import Expr.broadcastPredicate
+import Expr._
 
 object Programs {
 
@@ -39,7 +39,7 @@ object Programs {
     bsrMV *: denseToBSr
 
   val binaryHypeproduct: Expr =
-    Foldr(Zero)(Mult) *: Tri(Square)
+    Foldr(Zero)(mult) *: Tri(Square)
 }
 
 

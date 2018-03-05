@@ -12,9 +12,9 @@ object Ops {
     def rewrite(equiv: Equiv): List[Expr] = le
       .map(_.normalizeComposition.etaExpansion)
       .flatMap(_ rewrite equiv)
+      .tap(_ => println(s"= { ${equiv.name} }"))
       .map(_.etaReduction.normalizeComposition.print())
       .distinct
-      .tap(_ => println(s"= { ${equiv.name} }"))
 
     def identityRewrite(ident: IdentityEquiv): List[Expr] = le
       .map(_.normalizeComposition)

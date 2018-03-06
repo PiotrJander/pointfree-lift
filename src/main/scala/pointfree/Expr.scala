@@ -9,6 +9,7 @@ import scalaz._
 import Type._
 
 sealed abstract class Expr {
+
   import Expr._
 
   def typ: Type = this match {
@@ -67,6 +68,7 @@ sealed abstract class Expr {
     case Split => (A ->: B) ->: (A ->: C) ->: A ->: TPair(B, C)
     case AddSelf => TPair(TFloat, TFloat) ->: TPair(TFloat, TFloat)
     case PlusElemwise => TPair(TPair(TFloat, TFloat), TPair(TFloat, TFloat)) ->: TPair(TFloat, TFloat)
+    case Placeholder => A
     case _: EVar => A
 
     case MssMap => TFloat ->: Quad(TFloat, TFloat, TFloat, TFloat)
@@ -105,7 +107,7 @@ sealed abstract class Expr {
 
   def apply(e: Expr): Expr = Application(this, e)
 
-//  def apply(e1: Expr, e2: Expr) = Application(this, Pair(e1)(e2))
+  //  def apply(e1: Expr, e2: Expr) = Application(this, Pair(e1)(e2))
 
   def *:(f: Expr): Expr = Composition(f, this)
 
@@ -156,6 +158,24 @@ sealed abstract class Expr {
         case Composition(f, g) => combinations(f, g, f rewrite equiv, g rewrite equiv, Composition)
         case _ => Nil
       })
+  }
+
+  def rewrite2(equiv: Equiv): Option[(Expr, Expr, Expr)] = {
+    val Equiv(_, lhs, rhs, name) = equiv
+    (lhs unify this).map(s => (Placeholder.asInstanceOf[Expr], this, rhs substitute s)) <+> (this match {
+      case Application(f, e) =>
+        f.rewrite2(equiv).map(applyFirst(placeholder => Application(placeholder, e))) <+>
+          e.rewrite2(equiv).map(applyFirst(placeholder => Application(f, placeholder)))
+      case Composition(f, g) =>
+        f.rewrite2(equiv).map(applyFirst(placeholder => Application(placeholder, g))) <+>
+          g.rewrite2(equiv).map(applyFirst(placeholder => Application(f, placeholder)))
+      case _ => None
+    })
+  }
+
+  def applyFirst[A, B, C, D](f: A => D)(p: (A, B, C)): (D, B, C) = {
+    val (a, b, c) = p
+    (f(a), b, c)
   }
 
   def identityRewrite(ident: IdentityEquiv): List[Expr] = (this _identityRewrite ident) ++ (this match {
@@ -328,3 +348,5 @@ object EVar {
   val D = EVar(3)
   val E = EVar(4)
 }
+
+case object Placeholder extends EVar(25)

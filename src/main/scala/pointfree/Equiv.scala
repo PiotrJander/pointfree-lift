@@ -9,7 +9,14 @@ import Scalaz._
 
 case class Equiv(name: String, left: Expr, right: Expr, transform: Substitution => Option[Substitution]) {
   def isApplicable(e: Expr): Boolean = {
-
+//    val Equiv(_, lhs, rhs, transform) = equiv
+//    (lhs unify this).flatMap(transform).map(rhs substitute).toList ++ // rewrites this
+//      (this match { // recurse
+//        case Application(f, e) => combinations(f, e, f rewrite equiv, e rewrite equiv, Application)
+//        case Composition(f, g) => combinations(f, g, f rewrite equiv, g rewrite equiv, Composition)
+//        case _ => Nil
+//      })
+    true
   }
 }
 

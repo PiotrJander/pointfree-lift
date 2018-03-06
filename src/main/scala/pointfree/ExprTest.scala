@@ -88,14 +88,14 @@ class ExprTest {
       .typecheck()
   }
 
-  @Test
-  def rewriteMssPar(): Unit = {
-    println(Programs.mssHomomorphism.typ)
-    (Programs.mssHomomorphism :: Nil)
-      .rewrite(catamorphimsPromotion)
-      .rewrite(catamorphimsPromotion)
-      .typecheck()
-  }
+//  @Test
+//  def rewriteMssPar(): Unit = {
+//    println(Programs.mssHomomorphism.typ)
+//    (Programs.mssHomomorphism :: Nil)
+//      .rewrite(catamorphimsPromotion)
+//      .rewrite(catamorphimsPromotion)
+//      .typecheck()
+//  }
 
   @Test
   def compositionAssociativity(): Unit = {
@@ -131,6 +131,8 @@ class ExprTest {
   def iai(): Unit = {
     println(Programs.iai.typ)
   }
+
+
 }
 
 

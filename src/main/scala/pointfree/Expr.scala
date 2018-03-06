@@ -159,14 +159,14 @@ sealed abstract class Expr {
       })
   }
 
-  def rewrite2(equiv: Equiv): Option[(Expr, Expr, Expr)] = {
-    val Equiv(_, lhs, rhs, name) = equiv
-    (lhs unify this).map(s => {
+  def rewrite2(equiv: Equiv): Option[(String, Expr, Expr, Expr)] = {
+    val Equiv(name, lhs, rhs, transform) = equiv
+    (lhs unify this).flatMap(transform).map(s => {
       val s_ = s + (EVar.Rest.n -> Identity)
       val placeholder = if (s.contains(EVar.Rest.n)) EVar.Placeholder *: s(EVar.Rest.n) else EVar.Placeholder
       val source = lhs.substitute(s_).etaReduction
       val dest = rhs.substitute(s_).etaReduction
-      (placeholder, source, dest)
+      (name, placeholder, source, dest)
     }) <+> (this match {
       case Application(f, e) =>
         f.rewrite2(equiv).map(applyFirst(placeholder => Application(placeholder, e))) <+>
@@ -178,9 +178,9 @@ sealed abstract class Expr {
     })
   }
 
-  def applyFirst(f: Expr => Expr)(p: (Expr, Expr, Expr)): (Expr, Expr, Expr) = {
-    val (a, b, c) = p
-    (f(a), b, c)
+  def applyFirst(f: Expr => Expr)(p: (String, Expr, Expr, Expr)): (String, Expr, Expr, Expr) = {
+    val (n, a, b, c) = p
+    (n, f(a), b, c)
   }
 
   def identityRewrite(ident: IdentityEquiv): List[Expr] = (this _identityRewrite ident) ++ (this match {

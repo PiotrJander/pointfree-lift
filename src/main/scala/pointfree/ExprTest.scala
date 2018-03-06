@@ -132,7 +132,12 @@ class ExprTest {
     println(Programs.iai.typ)
   }
 
-
+  @Test
+  def rewrite2(): Unit = {
+    val expr = Map(Plus) *: Map(Plus) *: Map(Plus)
+    val res = expr.rewrite2(mapDistributesThroughComposition)
+    println(res)
+  }
 }
 
 

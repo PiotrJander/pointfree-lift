@@ -26,8 +26,8 @@ object Equiv {
 
   val filterMapMultAbsorber = Equiv(
     name = "filter map mult absorber",
-    left = Filter(Neq(Zero)) *: Map(Uncurry(Mult *: A)) *: B,
-    right = Map(Uncurry(Mult *: A)) *: Filter(Neq(Zero) *: Snd) *: B
+    left = Filter(Neq(Zero)) *: Map(Uncurry(Mult *: A)) *: Rest,
+    right = Map(Uncurry(Mult *: A)) *: Filter(Neq(Zero) *: Snd) *: Rest
   )
 
 //  val mapDistributivityReverse = Equiv(
@@ -51,48 +51,48 @@ object Equiv {
 
   val mapOverZippedEnumeration = Equiv(
     name = "map over zipped enumeration",
-    left = Map(Uncurry(A)) *: EZip(B) *: C,
-    right = Map(Uncurry(A *: Access(B))) *: EZip(Enumeration) *: C
+    left = Map(Uncurry(A)) *: EZip(B) *: Rest,
+    right = Map(Uncurry(A *: Access(B))) *: EZip(Enumeration) *: Rest
   )
 
   // max seg sum
 
   val mapDistributesThroughComposition = Equiv(
     name = "map distributes backwards through composition",
-    left = Map(A) *: Map(B) *: C,
-    right = Map(A *: B) *: C
+    left = Map(A) *: Map(B) *: Rest,
+    right = Map(A *: B) *: Rest
   )
 
   val mapPromotion = Equiv(
     name = "map promotion",
-    left = Map(A) *: Join *: B,
-    right = Join *: Map(Map(A)) *: B
+    left = Map(A) *: Join *: Rest,
+    right = Join *: Map(Map(A)) *: Rest
   )
 
   val catamorphismPromotion = Equiv(
     name = "catamorphims promotion",
-    left = Reduce(A) *: Join *: B,
-    right = Reduce(A) *: Map(Reduce(A)) *: B
+    left = Reduce(A) *: Join *: Rest,
+    right = Reduce(A) *: Map(Reduce(A)) *: Rest
   )
 
   val hornersRule = Equiv(
     name = "Horner's rule",
-    left = Reduce(A) *: Map(Reduce(B)) *: Tails *: C,
-    right = Reduce(B *: A(D)) *: C,
+    left = Reduce(A) *: Map(Reduce(B)) *: Tails *: Rest,
+    right = Reduce(B *: A(D)) *: Rest,
     transform = s => neutralElement.get(s(B)).map(neutral => s + (D.n -> neutral))
   )
 
   val birdsHornersRule = Equiv(
     name = "Bird's Horner's rule",
-    left = Foldr(A)(B) *: Tri(C) *: D,
-    right = Foldr(A)(B *: Bimap(Identity)(C)) *: D,
+    left = Foldr(A)(B) *: Tri(C) *: Rest,
+    right = Foldr(A)(B *: Bimap(Identity)(C)) *: Rest,
     transform = s => { distributivity.contains((s(C), s(B))).option(s) }
   )
 
   val foldToScan = Equiv(
     name = "fold to scan",
-    left = Map(Reduce(A)) *: Inits *: B,
-    right = Scan(A) *: B
+    left = Map(Reduce(A)) *: Inits *: Rest,
+    right = Scan(A) *: Rest
   )
 
   /**

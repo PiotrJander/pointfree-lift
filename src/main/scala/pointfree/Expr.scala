@@ -68,7 +68,6 @@ sealed abstract class Expr {
     case Split => (A ->: B) ->: (A ->: C) ->: A ->: TPair(B, C)
     case AddSelf => TPair(TFloat, TFloat) ->: TPair(TFloat, TFloat)
     case PlusElemwise => TPair(TPair(TFloat, TFloat), TPair(TFloat, TFloat)) ->: TPair(TFloat, TFloat)
-    case Placeholder => A
     case _: EVar => A
 
     case MssMap => TFloat ->: Quad(TFloat, TFloat, TFloat, TFloat)
@@ -162,7 +161,13 @@ sealed abstract class Expr {
 
   def rewrite2(equiv: Equiv): Option[(Expr, Expr, Expr)] = {
     val Equiv(_, lhs, rhs, name) = equiv
-    (lhs unify this).map(s => (Placeholder.asInstanceOf[Expr], this, rhs substitute s)) <+> (this match {
+    (lhs unify this).map(s => {
+      val s_ = s + (EVar.Rest.n -> Identity)
+      val placeholder = if (s.contains(EVar.Rest.n)) EVar.Placeholder *: s(EVar.Rest.n) else EVar.Placeholder
+      val source = lhs.substitute(s_).etaReduction
+      val dest = rhs.substitute(s_).etaReduction
+      (placeholder, source, dest)
+    }) <+> (this match {
       case Application(f, e) =>
         f.rewrite2(equiv).map(applyFirst(placeholder => Application(placeholder, e))) <+>
           e.rewrite2(equiv).map(applyFirst(placeholder => Application(f, placeholder)))
@@ -173,7 +178,7 @@ sealed abstract class Expr {
     })
   }
 
-  def applyFirst[A, B, C, D](f: A => D)(p: (A, B, C)): (D, B, C) = {
+  def applyFirst(f: Expr => Expr)(p: (Expr, Expr, Expr)): (Expr, Expr, Expr) = {
     val (a, b, c) = p
     (f(a), b, c)
   }
@@ -339,7 +344,9 @@ case class TypeAnnotation(e: Expr, t: Type) extends Expr {
   override def toString: String = s"($e :: $t)"
 }
 
-case class EVar(n: Int) extends Expr
+case class EVar(n: Int) extends Expr {
+  override def toString: String = if (n == EVar.Placeholder.n) "Placeholder" else super.toString
+}
 
 object EVar {
   val A = EVar(0)
@@ -347,6 +354,6 @@ object EVar {
   val C = EVar(2)
   val D = EVar(3)
   val E = EVar(4)
+  val Rest = EVar(5)
+  val Placeholder = EVar(6)
 }
-
-case object Placeholder extends EVar(25)

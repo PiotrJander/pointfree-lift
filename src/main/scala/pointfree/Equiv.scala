@@ -7,7 +7,11 @@ import pointfree.Ops._
 import scalaz._
 import Scalaz._
 
-case class Equiv(name: String, left: Expr, right: Expr, transform: Substitution => Option[Substitution])
+case class Equiv(name: String, left: Expr, right: Expr, transform: Substitution => Option[Substitution]) {
+  def isApplicable(e: Expr): Boolean = {
+
+  }
+}
 
 object Equiv {
 
@@ -91,11 +95,25 @@ object Equiv {
     * TODO Cole paper: can we obtain the required additional baggage automatically?
     * or just generalize for segment sum problems?
     */
-  val catamorphimsPromotion = Equiv(
-    name = "catamorphism promotion",
-    left = Reduce(A) *: Map(B) *: C,
-    right = Reduce(A) *: Map(Reduce(A) *: Map(B)) *: Split *: C
+//  val catamorphismPromotion = Equiv(
+//    name = "catamorphism promotion",
+//    left = Reduce(A) *: Map(B) *: C,
+//    right = Reduce(A) *: Map(Reduce(A) *: Map(B)) *: Split *: C
+//  )
+
+  val rewrites = List(
+    filterMapMultAbsorber,
+    filterSumMonoid,
+    mapOverZippedEnumeration,
+    mapDistributesThroughComposition,
+    mapPromotion,
+    catamorphismPromotion,
+    hornersRule,
+    birdsHornersRule,
+    foldToScan
   )
+
+  def applicableRules(e: Expr): List[Equiv] = rewrites.filter(_.isApplicable(e))
 }
 
 

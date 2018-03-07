@@ -8,6 +8,8 @@ import scalaz.Scalaz._
 import scalaz._
 import Type._
 
+
+
 sealed abstract class Expr {
 
   import Expr._

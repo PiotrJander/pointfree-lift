@@ -17,6 +17,9 @@ object Programs {
           EZip(Enumeration)
       )
 
+  val densePair: Expr =
+    Curry(Map(Reduce(Plus)) *: Map(Map(Uncurry(Mult))) *: Map(Uncurry(EZip)) *: Uncurry(EZip)) *: Repeat
+
   val bsrMV: Expr =
     Join *: Map(Reduce(Lift(Plus)) *: Map(Uncurry(densePair *: Access(Split(EVector)))))
 
@@ -25,9 +28,6 @@ object Programs {
   val maxSegSum: Expr = Reduce(Max) *: Map(Reduce(Plus)) *: segs
 
   val mssHomomorphism: Expr = MssExtract *: Reduce(MssFold) *: Map(MssMap)
-
-  val densePair: Expr =
-    Curry(Map(Reduce(Plus)) *: Map(Map(Uncurry(Mult))) *: Map(Uncurry(EZip)) *: Uncurry(EZip)) *: Repeat
 
   val nonZeroMatrix: Expr =
     broadcastPredicate(broadcastPredicate(Neq(Zero)))

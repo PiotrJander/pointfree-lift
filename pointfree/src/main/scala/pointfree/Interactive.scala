@@ -29,50 +29,69 @@ package pointfree
 //  }
 //}
 
-import java.util.{TimerTask, Timer}
-
-import net.team2xh.onions.{Palettes, Themes}
+import net.team2xh.onions.Themes
 import net.team2xh.onions.components.Frame
 import net.team2xh.onions.components.widgets._
-import net.team2xh.onions.utils.{Varying, Lorem, TextWrap}
+import net.team2xh.onions.utils.Varying
 import net.team2xh.scurses.{Colors, Scurses}
 import net.team2xh.scurses.RichText._
 
-import scala.util.Random
-
 object Interactive extends App {
+
+  val programs: List[Expr] = List(
+    Programs.csrMV,
+    Programs.maxSegSum
+  )
+  val program_data = new Select.Data(programs.map(_.toString))
+
+  var currentProgram: Varying[Expr] = new Varying(programs.head)
+  var currentProgramTyp: Varying[Type] = new Varying(currentProgram.value.typ)
+  var currentProgram_items: Varying[List[String]] = new Varying(getCurrentProgram_items)
+  currentProgram.subscribe { () =>
+    currentProgramTyp := currentProgram.value.typ
+    currentProgram_items := getCurrentProgram_items
+  }
+
+  val applicableRules_data = new Select.Data(List("foo", "bar"))
+
+  var derivation_items: Varying[List[String]] = new Varying(List("foo", "bar"))
+
+  def programs_select(): Unit = {
+    // TODO clear derivation
+  }
+
+  def getCurrentProgram_items: List[String] = List(
+    currentProgram.value.toString,
+    currentProgramTyp.value.toString
+  )
 
   Scurses { implicit screen =>
     implicit val debug = true
     val frame = Frame(title = Some("Pointfree Lift derivations"),
       debug = true, theme = Themes.default)
 
+    // split and name
     val colA = frame.panel
     val colB = colA.splitRight
+    val colA2 = colA.splitDown
     val colB2 = colB.splitDown
-
-    colA.title = "Applicable rules"
+    colA.title = "Programs"
+    colA2.title = "Applicable rules"
     colB.title = "Derivation"
     colB2.title = "Current program and type"
 
-    Label(colA, "foo").enabled = false
+    // programs
+    Select(colA, program_data)
 
-    colA.
+    // applicable rules
+    Select(colA2, applicableRules_data)
 
-//    Label(colA, )
-//
-//    val rewrites = List(
-//      "map distributes through composition",
-//      "commute filter reduce"
-//    )
-//
-//    rewrites.foreach(Lab)
+    // derivation
+    ListWidget(colB, derivation_items)
 
-//    val foo = Label(colB, "foo\n= { ... }\nbar")
-//
-//    Label(colB2, "map f . map g")
-//    Label(colB2, "[Float] -> Float")
+    // current and next program
+    ListWidget(colB2, currentProgram_items)
 
-    frame.show
+    frame.show()
   }
 }

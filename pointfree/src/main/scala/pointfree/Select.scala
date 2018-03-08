@@ -7,26 +7,33 @@ import net.team2xh.scurses.RichText.Foreground
 import net.team2xh.scurses.{Keys, Scurses}
 
 object Select {
-  class Data(arg: List[String]) {
+  class Data[A](val args: Varying[List[A]], f: A => String) {
+
     var counter: Varying[Int] = 0
-    var items: Varying[List[String]] = new Varying(arg)
+//    var items: Varying[List[String]] = new Varying(arg)
+
+    def items: List[String] = args.value.map(f)
+
+    args.subscribe { () =>
+      counter := 0
+    }
   }
 }
 
-case class Select(parent: FramePanel, data: Select.Data)
+case class Select[A](parent: FramePanel, data: Select.Data[A], action: A => Unit)
                  (implicit screen: Scurses)
-  extends Widget(parent, data.counter) {
+  extends Widget(parent, data.counter, data.args) {
 
   override def focusable: Boolean = true
 
   def drawText(foreground: Int, background: Int): Unit = {
-    for ((line, i) <- data.items.value.zipWithIndex) {
+    for ((line, i) <- data.items.zipWithIndex) {
       if (i == data.counter.value) {
         screen.put(0, i, Drawing.clipText(line, innerWidth),
-          foreground = foreground, background = background)
+          foreground = background, background = foreground)
       } else {
         screen.put(0, i, Drawing.clipText(line, innerWidth),
-          foreground = background, background = foreground)
+          foreground = foreground, background = background)
       }
 
     }
@@ -38,14 +45,14 @@ case class Select(parent: FramePanel, data: Select.Data)
 
   override def handleKeypress(keypress: Int): Unit = {
     if (keypress == 'j') {
-      data.counter := (data.counter.value + 1) % data.items.value.length
+      data.counter := (data.counter.value + 1) % data.args.value.length
       redraw()
     } else if (keypress == 'k') {
-      data.counter := (data.counter.value - 1) % data.items.value.length
-    } else {
-
+      data.counter := (data.counter.value - 1) % data.args.value.length
+    } else if (keypress == Keys.SPACE) {
+      action(data.args.value(data.counter.value))
     }
   }
 
-  override def innerHeight: Int = data.items.value.length
+  override def innerHeight: Int = data.items.length
 }

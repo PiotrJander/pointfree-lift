@@ -35,62 +35,83 @@ import net.team2xh.onions.components.widgets._
 import net.team2xh.onions.utils.Varying
 import net.team2xh.scurses.{Colors, Scurses}
 import net.team2xh.scurses.RichText._
+import scala.collection.immutable
 
 object Interactive extends App {
 
-  val programs: List[Expr] = List(
-    Programs.csrMV,
+  val programs: Varying[List[Expr]] = new Varying(List(
+    Programs.denseMV,
     Programs.maxSegSum
-  )
-  val program_data = new Select.Data(programs.map(_.toString))
+  ))
+  val program_data = new Select.Data[Expr](programs, e => e.toString)
+  var currentProgram: Varying[Expr] = new Varying(Identity)
 
-  var currentProgram: Varying[Expr] = new Varying(programs.head)
-  var currentProgramTyp: Varying[Type] = new Varying(currentProgram.value.typ)
-  var currentProgram_items: Varying[List[String]] = new Varying(getCurrentProgram_items)
+
+  // applicable rewrites
+  val applicableRewrites: Varying[List[(Equiv, Expr)]] = new Varying(List())
   currentProgram.subscribe { () =>
-    currentProgramTyp := currentProgram.value.typ
-    currentProgram_items := getCurrentProgram_items
+    applicableRewrites := (for {
+      rule <- Equiv.rewrites
+      next <- currentProgram.value.normalizeComposition.etaExpansion.rewrite(rule)
+    } yield (rule, next.etaReduction.normalizeComposition))
   }
-
-  val applicableRules_data = new Select.Data(List("foo", "bar"))
-
-  var derivation_items: Varying[List[String]] = new Varying(List("foo", "bar"))
-
-  def programs_select(): Unit = {
-    // TODO clear derivation
-  }
-
-  def getCurrentProgram_items: List[String] = List(
-    currentProgram.value.toString,
-    currentProgramTyp.value.toString
+  val applicableRules_data = new Select.Data[(Equiv, Expr)](
+    applicableRewrites,
+    { case (rule, next) => s"${rule.name}: ${next.toString}" }
   )
+
+  // derivation
+  val derivation_items: Varying[immutable.List[String]] = new Varying(List())
+
+  // current
+  val currentProgramString: Varying[String] = "foo"
+  var currentProgramTyp: Varying[String] = "bar"
+  currentProgram.subscribe { () =>
+    currentProgramString := currentProgram.value.toString
+    currentProgramTyp := currentProgram.value.typ.toString
+  }
+
+  // SET PROGRAM
+  currentProgram := programs.value.head
+
+  def selectProgram(e: Expr): Unit = {
+    currentProgram := e
+    derivation_items := List(e.toString)
+  }
+
+  def selectRewriteRule(arg: (Equiv, Expr)): Unit = {
+    val (rule, next) = arg
+    currentProgram := next
+    derivation_items := next.toString :: s"= { ${rule.name} }" :: derivation_items.value
+  }
 
   Scurses { implicit screen =>
     implicit val debug = true
     val frame = Frame(title = Some("Pointfree Lift derivations"),
-      debug = true, theme = Themes.default)
+      debug = true, theme = Themes.light)
 
     // split and name
     val colA = frame.panel
-    val colB = colA.splitRight
-    val colA2 = colA.splitDown
-    val colB2 = colB.splitDown
+    val colB = colA.splitDown
+    val colB1 = colB.splitDown
+    val colB2 = colB1.splitDown
     colA.title = "Programs"
-    colA2.title = "Applicable rules"
-    colB.title = "Derivation"
+    colB.title = "Applicable rules"
+    colB1.title = "Derivation"
     colB2.title = "Current program and type"
 
     // programs
-    Select(colA, program_data)
+    Select(colA, program_data, selectProgram)
 
     // applicable rules
-    Select(colA2, applicableRules_data)
+    Select(colB, applicableRules_data, selectRewriteRule)
 
     // derivation
-    ListWidget(colB, derivation_items)
+    ListWidget(colB1, derivation_items)
 
     // current and next program
-    ListWidget(colB2, currentProgram_items)
+    Label(colB2, currentProgramString)
+    Label(colB2, currentProgramTyp)
 
     frame.show()
   }

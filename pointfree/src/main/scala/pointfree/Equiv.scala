@@ -120,7 +120,7 @@ object Equiv {
     foldToScan
   )
 
-  def applicableRules(e: Expr): List[(String, Expr, Expr, Expr)] = rewrites.map(e.rewrite2).map(_.toList).concatenate
+//  def applicableRules(e: Expr): List[(String, Expr, Expr, Expr)] = rewrites.map(e.rewrite2).map(_.toList).concatenate
 }
 
 

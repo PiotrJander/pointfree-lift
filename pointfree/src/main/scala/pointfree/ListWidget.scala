@@ -6,14 +6,16 @@ import net.team2xh.onions.utils.{Drawing, Varying}
 import net.team2xh.scurses.RichText.Foreground
 import net.team2xh.scurses.{Keys, Scurses}
 
-case class ListWidget(parent: FramePanel, items: Varying[List[String]])
+import scala.collection.immutable
+
+case class ListWidget(parent: FramePanel, items: Varying[immutable.List[String]])
                  (implicit screen: Scurses)
-  extends Widget(parent) {
+  extends Widget(parent, items) {
 
   override def focusable: Boolean = false
 
   def drawText(foreground: Int, background: Int): Unit = {
-    for ((line, i) <- items.value.zipWithIndex) {
+    for ((line, i) <- items.value.reverse.zipWithIndex) {
       screen.put(0, i, Drawing.clipText(line, innerWidth),
         foreground = foreground, background = background)
     }

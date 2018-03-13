@@ -8,7 +8,10 @@ import scalaz.Scalaz._
 import scalaz._
 import Type._
 
+
+
 sealed abstract class Expr {
+
   import Expr._
 
   def typ: Type = this match {
@@ -32,6 +35,9 @@ sealed abstract class Expr {
     case Identity => A ->: A
     case Map => (A ->: B) ->: TList(A) ->: TList(B)
     case Reduce => (A ->: A ->: A) ->: TList(A) ->: A
+    case Foldr => B ->: (TPair(A, B) ->: B) ->: TList(A) ->: B
+    case Bimap => (A ->: C) ->: (B ->: D) ->: TPair(A, B) ->: TPair(C, D)
+    case Tri => (A ->: A) ->: TList(A) ->: TList(A)
     case Scan => (A ->: A ->: A) ->: TList(A) ->: TList(A)
     case Filter => (A ->: TBool) ->: TList(A) ->: TList(A)
     case Curry => (TPair(A, B) ->: C) ->: A ->: B ->: C
@@ -45,6 +51,8 @@ sealed abstract class Expr {
     case Plus => TFloat ->: TFloat ->: TFloat
     case Mult => TFloat ->: TFloat ->: TFloat
     case Max => TFloat ->: TFloat ->: TFloat
+    case Square => TFloat ->: TFloat
+    case Pair => A ->: B ->: TPair(A, B)
     case Zero => TFloat
     case One => TFloat
     case EVector => TList(TFloat)
@@ -58,6 +66,10 @@ sealed abstract class Expr {
     case FMap => (A ->: B) ->: TPair(A, C) ->: TPair(B, C)
     case SMap => (A ->: B) ->: TPair(C, A) ->: TPair(C, B)
     case Transpose => TList(TList(A)) ->: TList(TList(A))
+    case Const => A ->: B ->: A
+    case Split => (A ->: B) ->: (A ->: C) ->: A ->: TPair(B, C)
+    case AddSelf => TPair(TFloat, TFloat) ->: TPair(TFloat, TFloat)
+    case PlusElemwise => TPair(TPair(TFloat, TFloat), TPair(TFloat, TFloat)) ->: TPair(TFloat, TFloat)
     case _: EVar => A
 
     case MssMap => TFloat ->: Quad(TFloat, TFloat, TFloat, TFloat)
@@ -95,6 +107,8 @@ sealed abstract class Expr {
   }
 
   def apply(e: Expr): Expr = Application(this, e)
+
+  //  def apply(e1: Expr, e2: Expr) = Application(this, Pair(e1)(e2))
 
   def *:(f: Expr): Expr = Composition(f, this)
 
@@ -147,6 +161,30 @@ sealed abstract class Expr {
       })
   }
 
+//  def rewrite2(equiv: Equiv): Option[(String, Expr, Expr, Expr)] = {
+//    val Equiv(name, lhs, rhs, transform) = equiv
+//    (lhs unify this).flatMap(transform).map(s => {
+//      val s_ = s + (EVar.Rest.n -> Identity)
+//      val placeholder = if (s.contains(EVar.Rest.n)) EVar.Placeholder *: s(EVar.Rest.n) else EVar.Placeholder
+//      val source = lhs.substitute(s_).etaReduction
+//      val dest = rhs.substitute(s_).etaReduction
+//      (name, placeholder, source, dest)
+//    }) <+> (this match {
+//      case Application(f, e) =>
+//        f.rewrite2(equiv).map(applyFirst(placeholder => Application(placeholder, e))) <+>
+//          e.rewrite2(equiv).map(applyFirst(placeholder => Application(f, placeholder)))
+//      case Composition(f, g) =>
+//        f.rewrite2(equiv).map(applyFirst(placeholder => Application(placeholder, g))) <+>
+//          g.rewrite2(equiv).map(applyFirst(placeholder => Application(f, placeholder)))
+//      case _ => None
+//    })
+//  }
+
+  def applyFirst(f: Expr => Expr)(p: (String, Expr, Expr, Expr)): (String, Expr, Expr, Expr) = {
+    val (n, a, b, c) = p
+    (n, f(a), b, c)
+  }
+
   def identityRewrite(ident: IdentityEquiv): List[Expr] = (this _identityRewrite ident) ++ (this match {
     case Application(f, e) => combinations(f, e, f identityRewrite ident, e identityRewrite ident, Application)
     case Composition(f, g) => combinations(f, g, f identityRewrite ident, g identityRewrite ident, Composition)
@@ -180,12 +218,26 @@ sealed abstract class Expr {
 object Expr {
   type Substitution = immutable.Map[Int, Expr]
 
+  def broadcastPredicate(p: Expr): Expr = Reduce(And) *: Map(p)
+
+  /**
+    * Uncurried functions: names start with lowercase
+    */
+
+  val mult: Expr = Uncurry(Mult)
+
+  /**
+    * Algebraic properties tables: neutral elements, distributivity, etc
+    */
+
+  val distributivity: List[(Expr, Expr)] = List(
+    (Square, mult)
+  )
+
   val neutralElement: immutable.Map[Expr, Expr] = immutable.Map(
     Plus -> Zero,
     Mult -> One
   )
-
-  def broadcastPredicate(p: Expr): Expr = Reduce(And) *: Map(p)
 }
 
 case class Application(f: Expr, e: Expr) extends Expr {
@@ -274,11 +326,29 @@ case object MssFold extends Expr
 
 case object MssExtract extends Expr
 
+case object Foldr extends Expr
+
+case object Bimap extends Expr
+
+case object Tri extends Expr
+
+case object Square extends Expr
+
+case object Pair extends Expr
+
+case object Const extends Expr
+
+case object AddSelf extends Expr
+
+case object PlusElemwise extends Expr
+
 case class TypeAnnotation(e: Expr, t: Type) extends Expr {
   override def toString: String = s"($e :: $t)"
 }
 
-case class EVar(n: Int) extends Expr
+case class EVar(n: Int) extends Expr {
+  override def toString: String = if (n == EVar.Placeholder.n) "Placeholder" else super.toString
+}
 
 object EVar {
   val A = EVar(0)
@@ -286,4 +356,6 @@ object EVar {
   val C = EVar(2)
   val D = EVar(3)
   val E = EVar(4)
+  val Rest = EVar(5)
+  val Placeholder = EVar(6)
 }

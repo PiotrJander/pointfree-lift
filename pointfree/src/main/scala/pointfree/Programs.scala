@@ -1,6 +1,6 @@
 package pointfree
 
-import Expr.broadcastPredicate
+import Expr._
 
 object Programs {
 
@@ -17,6 +17,9 @@ object Programs {
           EZip(Enumeration)
       )
 
+  val densePair: Expr =
+    Curry(Map(Reduce(Plus)) *: Map(Map(Uncurry(Mult))) *: Map(Uncurry(EZip)) *: Uncurry(EZip)) *: Repeat
+
   val bsrMV: Expr =
     Join *: Map(Reduce(Lift(Plus)) *: Map(Uncurry(densePair *: Access(Split(EVector)))))
 
@@ -26,9 +29,6 @@ object Programs {
 
   val mssHomomorphism: Expr = MssExtract *: Reduce(MssFold) *: Map(MssMap)
 
-  val densePair: Expr =
-    Curry(Map(Reduce(Plus)) *: Map(Map(Uncurry(Mult))) *: Map(Uncurry(EZip)) *: Uncurry(EZip)) *: Repeat
-
   val nonZeroMatrix: Expr =
     broadcastPredicate(broadcastPredicate(Neq(Zero)))
 
@@ -37,6 +37,12 @@ object Programs {
 
   val bsrConvertThenMV: Expr =
     bsrMV *: denseToBSr
+
+  val binaryHypeproduct: Expr =
+    Foldr(Zero)(mult) *: Tri(Square)
+
+  val iai: Expr =
+    Foldr(Pair(Zero)(Zero))(PlusElemwise) *: Tri(AddSelf) *: Map(Split(Const(Zero))(Identity))
 }
 
 

@@ -13,6 +13,7 @@ object Ops {
       .tap(_ => println(s"= { ${equiv.name} }"))
       .map(_.normalizeComposition.etaExpansion)
       .flatMap(_ rewrite equiv)
+      .tap(_ => println(s"= { ${equiv.name} }"))
       .map(_.etaReduction.normalizeComposition.print())
       .distinct
 

@@ -89,14 +89,14 @@ class ExprTest {
       .typecheck()
   }
 
-  @Test
-  def rewriteMssPar(): Unit = {
-    println(Programs.mssHomomorphism.typ)
-    (Programs.mssHomomorphism :: Nil)
-      .rewrite(catamorphimsPromotion)
-      .rewrite(catamorphimsPromotion)
-      .typecheck()
-  }
+//  @Test
+//  def rewriteMssPar(): Unit = {
+//    println(Programs.mssHomomorphism.typ)
+//    (Programs.mssHomomorphism :: Nil)
+//      .rewrite(catamorphimsPromotion)
+//      .rewrite(catamorphimsPromotion)
+//      .typecheck()
+//  }
 
   @Test
   def compositionAssociativity(): Unit = {
@@ -118,6 +118,27 @@ class ExprTest {
   def bsrMV(): Unit = {
     println(Programs.bsrMV.typ)
   }
+
+  @Test
+  def binHyperprod(): Unit = {
+    println(Programs.binaryHypeproduct.typ)
+    (Programs.binaryHypeproduct :: Nil)
+        .tap(println)
+        .rewrite(birdsHornersRule)
+        .typecheck()
+  }
+
+  @Test
+  def iai(): Unit = {
+    println(Programs.iai.typ)
+  }
+
+//  @Test
+//  def rewrite2(): Unit = {
+//    val expr = Map(Plus) *: Map(Plus) *: Map(Plus)
+//    val res = expr.rewrite2(mapDistributesThroughComposition)
+//    println(res)
+//  }
 }
 
 

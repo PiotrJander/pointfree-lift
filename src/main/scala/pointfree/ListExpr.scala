@@ -10,11 +10,11 @@ object Ops {
 
   implicit class ListExprOps(le: List[Expr]) {
     def rewrite(equiv: Equiv): List[Expr] = le
+      .tap(_ => println(s"= { ${equiv.name} }"))
       .map(_.normalizeComposition.etaExpansion)
       .flatMap(_ rewrite equiv)
       .map(_.etaReduction.normalizeComposition.print())
       .distinct
-      .tap(_ => println(s"= { ${equiv.name} }"))
 
     def identityRewrite(ident: IdentityEquiv): List[Expr] = le
       .map(_.normalizeComposition)

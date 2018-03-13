@@ -68,6 +68,7 @@ class ExprTest {
   @Test
   def rewriteCsr(): Unit = {
     (Programs.denseMV :: Nil)
+      .tap(le => println(le.head))
       .rewrite(filterSumMonoid)
       .rewrite(mapOverZippedEnumeration)
       .rewrite(filterMapMultAbsorber)
@@ -78,7 +79,7 @@ class ExprTest {
   @Test
   def rewriteMaxSegSum(): Unit = {
     (Programs.maxSegSum :: Nil)
-      .tap(println)
+      .tap(le => println(le.head))
       .rewrite(mapPromotion)
       .rewrite(catamorphismPromotion)
       .rewrite(mapDistributesThroughComposition)

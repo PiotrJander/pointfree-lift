@@ -14,70 +14,7 @@ sealed abstract class Expr {
 
   import Expr._
 
-  def typ: Type = this match {
-    case Application(f, e) =>
-      val renaming = f.typ alphaConversion e.typ
-      val TArrow(a, b) = f.typ substitute renaming
-      val Some(subst) = a unify e.typ
-      b substitute subst
-    case Composition(f, g) =>
-      val renaming = f.typ alphaConversion g.typ
-      val TArrow(a, b) = g.typ
-      val TArrow(b_, c) = f.typ substitute renaming
-      val Some(subst) = b unify b_
-      (a substitute subst) ->: (c substitute subst)
-    case TypeAnnotation(e, t) =>
-      val typ = e.typ
-      val renaming = typ alphaConversion t
-      val typRenamed = typ substitute renaming
-      val Some(subst) = typRenamed unify t
-      t substitute subst
-    case Identity => A ->: A
-    case Map => (A ->: B) ->: TList(A) ->: TList(B)
-    case Reduce => (A ->: A ->: A) ->: TList(A) ->: A
-    case Foldr => B ->: (TPair(A, B) ->: B) ->: TList(A) ->: B
-    case Bimap => (A ->: C) ->: (B ->: D) ->: TPair(A, B) ->: TPair(C, D)
-    case Tri => (A ->: A) ->: TList(A) ->: TList(A)
-    case Scan => (A ->: A ->: A) ->: TList(A) ->: TList(A)
-    case Filter => (A ->: TBool) ->: TList(A) ->: TList(A)
-    case Curry => (TPair(A, B) ->: C) ->: A ->: B ->: C
-    case Uncurry => (A ->: B ->: C) ->: TPair(A, B) ->: C
-    case EZip => TList(A) ->: TList(B) ->: TList(TPair(A, B))
-    case Unzip => TList(TPair(A, B)) ->: TPair(TList(A), TList(B))
-    case Access => TList(A) ->: TInt ->: A
-    case Neq => A ->: A ->: TBool
-    case Snd => TPair(A, B) ->: B
-    case And => TBool ->: TBool ->: TBool
-    case Plus => TFloat ->: TFloat ->: TFloat
-    case Mult => TFloat ->: TFloat ->: TFloat
-    case Max => TFloat ->: TFloat ->: TFloat
-    case Square => TFloat ->: TFloat
-    case Pair => A ->: B ->: TPair(A, B)
-    case Zero => TFloat
-    case One => TFloat
-    case EVector => TList(TFloat)
-    case Enumeration => TList(TInt)
-    case Tails => TList(A) ->: TList(TList(A))
-    case Inits => TList(A) ->: TList(TList(A))
-    case Join => TList(TList(A)) ->: TList(A)
-    case Split => TList(A) ->: TList(TList(A))
-    case Repeat => A ->: TList(A)
-    case Lift => (A ->: A ->: A) ->: TList(A) ->: TList(A) ->: TList(A)
-    case FMap => (A ->: B) ->: TPair(A, C) ->: TPair(B, C)
-    case SMap => (A ->: B) ->: TPair(C, A) ->: TPair(C, B)
-    case Transpose => TList(TList(A)) ->: TList(TList(A))
-    case Const => A ->: B ->: A
-    case Split => (A ->: B) ->: (A ->: C) ->: A ->: TPair(B, C)
-    case AddSelf => TPair(TFloat, TFloat) ->: TPair(TFloat, TFloat)
-    case PlusElemwise => TPair(TPair(TFloat, TFloat), TPair(TFloat, TFloat)) ->: TPair(TFloat, TFloat)
-    case _: EVar => A
-
-    case MssMap => TFloat ->: Quad(TFloat, TFloat, TFloat, TFloat)
-    case MssFold =>
-      val q = Quad(TFloat, TFloat, TFloat, TFloat)
-      q ->: q ->: q
-    case MssExtract => Quad(TFloat, TFloat, TFloat, TFloat) ->: TFloat
-  }
+  def typ: Type
 
   def unify(e: Expr): Option[Substitution] = {
     try {
@@ -89,11 +26,11 @@ sealed abstract class Expr {
 
   def _unify(e: Expr): State[Substitution, Unit] = (this, e) match {
     case (EVar(n), a) => modify(_ + (n -> a))
-    case (TypeAnnotation(expr, t), a) =>
-      t renameAndUnify a.typ match {
-        case Some(_) => expr _unify a
-        case None => throw UnificationException
-      }
+//    case (TypeAnnotation(expr, t), a) =>
+//      t renameAndUnify a.typ match {
+//        case Some(_) => expr _unify a
+//        case None => throw UnificationException
+//      }
     case (Application(a, b), Application(c, d)) => (a _unify c) >> (b _unify d)
     case (Composition(a, b), Composition(c, d)) => (a _unify c) >> (b _unify d)
     case (a, b) => if (a == b) State((_, ())) else throw UnificationException
@@ -112,7 +49,7 @@ sealed abstract class Expr {
 
   def *:(f: Expr): Expr = Composition(f, this)
 
-  def of(t: Type): Expr = TypeAnnotation(this, t)
+//  def of(t: Type): Expr = TypeAnnotation(this, t)
 
   def print(): Expr = {
     println(this)
@@ -243,6 +180,13 @@ object Expr {
 case class Application(f: Expr, e: Expr) extends Expr {
   override def toString: String = s"${compositionParentheses(f)} ${compositionApplicationParentheses(e)}"
 
+  override def typ: Type = {
+    val renaming = f.typ alphaConversion e.typ
+    val TArrow(a, b) = f.typ substitute renaming
+    val Some(subst) = a unify e.typ
+    b substitute subst
+  }
+
   def compositionParentheses(c: Expr): String = c match {
     case c: Composition => s"($c)"
     case _ => c.toString
@@ -260,94 +204,184 @@ case class Composition(f: Expr, g: Expr) extends Expr {
     case _: Composition => s"($f) ∘ $g"
     case _ => s"$f ∘ $g"
   }
+
+  override def typ: Type = {
+    val renaming = f.typ alphaConversion g.typ
+    val TArrow(a, b) = g.typ
+    val TArrow(b_, c) = f.typ substitute renaming
+    val Some(subst) = b unify b_
+    (a substitute subst) ->: (c substitute subst)
+  }
 }
 
-case object Identity extends Expr
+case object Identity extends Expr {
+  override def typ: Type = A ->: A
+}
 
-case object Map extends Expr
+case object Map extends Expr {
+  override def typ: Type = (A ->: B) ->: TList(A) ->: TList(B)
+}
 
-case object Reduce extends Expr
+case object Bimap extends Expr {
+  override def typ: Type = (A ->: C) ->: (B ->: D) ->: TPair(A, B) ->: TPair(C, D)
+}
 
-case object Scan extends Expr
+case object Tri extends Expr {
+  override def typ: Type = (A ->: A) ->: TList(A) ->: TList(A)
+}
 
-case object Filter extends Expr
+case object Reduce extends Expr {
+  override def typ: Type = (A ->: A ->: A) ->: TList(A) ->: A
+}
 
-case object Curry extends Expr
+case object Foldr extends Expr {
+  override def typ: Type = B ->: (TPair(A, B) ->: B) ->: TList(A) ->: B
+}
 
-case object Uncurry extends Expr
+case object Scan extends Expr {
+  override def typ: Type = (A ->: A ->: A) ->: TList(A) ->: TList(A)
+}
 
-case object EZip extends Expr
+case object Filter extends Expr {
+  override def typ: Type = (A ->: TBool) ->: TList(A) ->: TList(A)
+}
 
-case object Unzip extends Expr
+case object Curry extends Expr {
+  override def typ: Type = (TPair(A, B) ->: C) ->: A ->: B ->: C
+}
 
-case object Access extends Expr
+case object Uncurry extends Expr {
+  override def typ: Type = (A ->: B ->: C) ->: TPair(A, B) ->: C
+}
 
-case object Neq extends Expr
+case object EZip extends Expr {
+  override def typ: Type = TList(A) ->: TList(B) ->: TList(TPair(A, B))
+}
 
-case object Snd extends Expr
+case object Unzip extends Expr {
+  override def typ: Type = TList(TPair(A, B)) ->: TPair(TList(A), TList(B))
+}
 
-case object And extends Expr
+case object Access extends Expr {
+  override def typ: Type = TList(A) ->: TInt ->: A
+}
 
-case object Plus extends Expr
+case object Neq extends Expr {
+  override def typ: Type = A ->: A ->: TBool
+}
 
-case object Mult extends Expr
+case object Snd extends Expr {
+  override def typ: Type = TPair(A, B) ->: B
+}
 
-case object Max extends Expr
+case object And extends Expr {
+  override def typ: Type = TBool ->: TBool ->: TBool
+}
 
-case object Zero extends Expr
+case object Plus extends Expr {
+  override def typ: Type = TFloat ->: TFloat ->: TFloat
+}
 
-case object One extends Expr
+case object Mult extends Expr {
+  override def typ: Type = TFloat ->: TFloat ->: TFloat
+}
 
-case object EVector extends Expr
+case object Max extends Expr {
+  override def typ: Type = TFloat ->: TFloat ->: TFloat
+}
 
-case object Enumeration extends Expr
+case object Zero extends Expr {
+  override def typ: Type = TFloat
+}
 
-case object Inits extends Expr
+case object One extends Expr {
+  override def typ: Type = TFloat
+}
 
-case object Tails extends Expr
+case object EVector extends Expr {
+  override def typ: Type = TList(TFloat)
+}
 
-case object Join extends Expr
+case object Enumeration extends Expr {
+  override def typ: Type = TList(TInt)
+}
 
-case object Split extends Expr
+case object Inits extends Expr {
+  override def typ: Type = TList(A) ->: TList(TList(A))
+}
 
-case object Repeat extends Expr
+case object Tails extends Expr {
+  override def typ: Type = TList(A) ->: TList(TList(A))
+}
 
-case object Lift extends Expr
+case object Join extends Expr {
+  override def typ: Type = TList(TList(A)) ->: TList(A)
+}
 
-case object FMap extends Expr
+case object Split extends Expr {
+  override def typ: Type = TList(A) ->: TList(TList(A))
+}
 
-case object SMap extends Expr
+case object PairSplit extends Expr {
+  override def typ: Type = (A ->: B) ->: (A ->: C) ->: A ->: TPair(B, C)
+}
 
-case object Transpose extends Expr
+case object Repeat extends Expr {
+  override def typ: Type = A ->: TList(A)
+}
 
-case object MssMap extends Expr
+case object Lift extends Expr {
+  override def typ: Type = (A ->: A ->: A) ->: TList(A) ->: TList(A) ->: TList(A)
+}
 
-case object MssFold extends Expr
+case object FMap extends Expr {
+  override def typ: Type = (A ->: B) ->: TPair(A, C) ->: TPair(B, C)
+}
 
-case object MssExtract extends Expr
+case object SMap extends Expr {
+  override def typ: Type = (A ->: B) ->: TPair(C, A) ->: TPair(C, B)
+}
 
-case object Foldr extends Expr
+case object Transpose extends Expr {
+  override def typ: Type = TList(TList(A)) ->: TList(TList(A))
+}
 
-case object Bimap extends Expr
+case object Square extends Expr {
+  override def typ: Type = TFloat ->: TFloat
+}
 
-case object Tri extends Expr
+case object Pair extends Expr {
+  override def typ: Type = A ->: B ->: TPair(A, B)
+}
 
-case object Square extends Expr
+case object Const extends Expr {
+  override def typ: Type = A ->: B ->: A
+}
 
-case object Pair extends Expr
+case object AddSelf extends Expr {
+  override def typ: Type = TPair(TFloat, TFloat) ->: TPair(TFloat, TFloat)
+}
 
-case object Const extends Expr
-
-case object AddSelf extends Expr
-
-case object PlusElemwise extends Expr
+case object PlusElemwise extends Expr {
+  override def typ: Type = TPair(TPair(TFloat, TFloat), TPair(TFloat, TFloat)) ->: TPair(TFloat, TFloat)
+}
 
 case class TypeAnnotation(e: Expr, t: Type) extends Expr {
   override def toString: String = s"($e :: $t)"
+
+  override def typ: Type = {
+    val typ = e.typ
+    val renaming = typ alphaConversion t
+    val typRenamed = typ substitute renaming
+    val Some(subst) = typRenamed unify t
+    t substitute subst
+  }
 }
 
 case class EVar(n: Int) extends Expr {
   override def toString: String = if (n == EVar.Placeholder.n) "Placeholder" else super.toString
+
+  override def typ: Type = A
 }
 
 object EVar {

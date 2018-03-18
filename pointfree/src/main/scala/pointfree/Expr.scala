@@ -18,6 +18,10 @@ sealed abstract class Expr {
 
   def evaluate: Value = VUndefined
 
+  def evaluate(input: Any): Value = this.evaluate match {
+    case VFun(f) => f(Value.wrap(input))
+  }
+
   def unify(e: Expr): Option[Substitution] = {
     try {
       (this _unify e).exec(immutable.Map[Int, Expr]()).some
@@ -51,7 +55,7 @@ sealed abstract class Expr {
 
   def *:(f: Expr): Expr = Composition(f, this)
 
-//  def of(t: Type): Expr = TypeAnnotation(this, t)
+  def of(t: Type): Expr = TypeAnnotation(this, t)
 
   def print(): Expr = {
     println(this)
@@ -219,7 +223,9 @@ case class Composition(f: Expr, g: Expr) extends Expr {
     (a substitute subst) ->: (c substitute subst)
   }
 
-  override def evaluate: Value = VFun(arg => Application(f, g(arg)).evaluate)
+  override def evaluate: Value = (f.evaluate, g.evaluate) match {
+    case (VFun(ff), VFun(gg)) => VFun(arg => ff(gg(arg)))
+  }
 }
 
 case object Identity extends Expr {
@@ -280,13 +286,11 @@ case object Uncurry extends Expr {
   override def typ: Type = (A ->: B ->: C) ->: TPair(A, B) ->: C
 
   override def evaluate: Value = VFun {
-    case VPair(a, b) => VFun(f => {
-      val partial = f(a)
-      partial match {
+    case VFun(f) => VFun {
+      case VPair(a, b) => f(a) match {
         case VFun(g) => g(b)
-//        case _ => VUndefined
       }
-    })
+    }
   }
 }
 

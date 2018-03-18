@@ -135,8 +135,16 @@ class ExprTest {
 
   @Test
   def evaluate(): Unit = {
-//    Map(Reduce(Plus) *: Map(Uncurry(Mult *: Access(EVector))))
-
+//    val prog = Uncurry(Mult *: Access(EVector))
+    val prog = Map(Reduce(Plus) *: Map(Uncurry(Mult *: Access(EVector))))
+    val input: List[List[(Int, Float)]] = List(
+      List((0, 4), (2, 5)),
+      List((1, 6)),
+      List((0, 7), (1, 8), (2, 9))
+    )
+//    val input: (Int, Float) = (2, 1)
+    val result = prog.evaluate(input).unwrap.asInstanceOf[List[Float]]
+    println(result)
   }
 
 //  @Test

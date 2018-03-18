@@ -9,8 +9,8 @@ object Value {
     case v: Int => VInt(v)
     case v: Float => VFloat(v)
     case v: Boolean => VBool(v)
-    case v: List[Value] => VList(v.map(e => wrap(e)))
-    case v: (Value, Value) => VPair(wrap(v._1), wrap(v._2))
+    case v: List[Any] => VList(v.map(e => wrap(e)))
+    case v: (Any, Any) => VPair(wrap(v._1), wrap(v._2))
 //    case v: (Value => Value) => VFun(v)
     case _ => VUndefined
   }

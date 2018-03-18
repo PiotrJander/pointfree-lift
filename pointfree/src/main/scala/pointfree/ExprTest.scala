@@ -133,6 +133,12 @@ class ExprTest {
     println(Programs.iai.typ)
   }
 
+  @Test
+  def evaluate(): Unit = {
+//    Map(Reduce(Plus) *: Map(Uncurry(Mult *: Access(EVector))))
+
+  }
+
 //  @Test
 //  def rewrite2(): Unit = {
 //    val expr = Map(Plus) *: Map(Plus) *: Map(Plus)

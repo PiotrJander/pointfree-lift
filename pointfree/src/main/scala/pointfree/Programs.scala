@@ -27,7 +27,7 @@ object Programs {
 
   val maxSegSum: Expr = Reduce(Max) *: Map(Reduce(Plus)) *: segs
 
-  val mssHomomorphism: Expr = MssExtract *: Reduce(MssFold) *: Map(MssMap)
+//  val mssHomomorphism: Expr = MssExtract *: Reduce(MssFold) *: Map(MssMap)
 
   val nonZeroMatrix: Expr =
     broadcastPredicate(broadcastPredicate(Neq(Zero)))

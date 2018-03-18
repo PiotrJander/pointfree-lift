@@ -16,6 +16,8 @@ sealed abstract class Expr {
 
   def typ: Type
 
+  def evaluate: Value = VUndefined
+
   def unify(e: Expr): Option[Substitution] = {
     try {
       (this _unify e).exec(immutable.Map[Int, Expr]()).some
@@ -187,6 +189,10 @@ case class Application(f: Expr, e: Expr) extends Expr {
     b substitute subst
   }
 
+  override def evaluate: Value = f.evaluate match {
+    case VFun(ff) => ff(e.evaluate)
+  }
+
   def compositionParentheses(c: Expr): String = c match {
     case c: Composition => s"($c)"
     case _ => c.toString
@@ -212,14 +218,24 @@ case class Composition(f: Expr, g: Expr) extends Expr {
     val Some(subst) = b unify b_
     (a substitute subst) ->: (c substitute subst)
   }
+
+  override def evaluate: Value = VFun(arg => Application(f, g(arg)).evaluate)
 }
 
 case object Identity extends Expr {
   override def typ: Type = A ->: A
+
+  override def evaluate: Value = VFun(a => a)
 }
 
 case object Map extends Expr {
   override def typ: Type = (A ->: B) ->: TList(A) ->: TList(B)
+
+  override def evaluate: Value = VFun {
+    case VFun(f) => VFun {
+      case VList(list) => VList(list.map(e => f(e)))
+    }
+  }
 }
 
 case object Bimap extends Expr {
@@ -232,6 +248,16 @@ case object Tri extends Expr {
 
 case object Reduce extends Expr {
   override def typ: Type = (A ->: A ->: A) ->: TList(A) ->: A
+
+  override def evaluate: Value = VFun {
+    case VFun(f) => VFun {
+      case VList(list) => list.foldRight(VFloat(0).asInstanceOf[Value])((e, acc) => {  // TODO need a start value as a param
+        f(e) match {
+          case VFun(g) => g(acc)
+        }
+      })
+    }
+  }
 }
 
 case object Foldr extends Expr {
@@ -252,6 +278,16 @@ case object Curry extends Expr {
 
 case object Uncurry extends Expr {
   override def typ: Type = (A ->: B ->: C) ->: TPair(A, B) ->: C
+
+  override def evaluate: Value = VFun {
+    case VPair(a, b) => VFun(f => {
+      val partial = f(a)
+      partial match {
+        case VFun(g) => g(b)
+//        case _ => VUndefined
+      }
+    })
+  }
 }
 
 case object EZip extends Expr {
@@ -264,6 +300,14 @@ case object Unzip extends Expr {
 
 case object Access extends Expr {
   override def typ: Type = TList(A) ->: TInt ->: A
+
+  override def evaluate: Value = VFun {
+    case VList(list) => VFun {
+      case VInt(i) => list(i)
+//      case _ => VUndefined
+    }
+//    case _ => VUndefined
+  }
 }
 
 case object Neq extends Expr {
@@ -280,10 +324,26 @@ case object And extends Expr {
 
 case object Plus extends Expr {
   override def typ: Type = TFloat ->: TFloat ->: TFloat
+
+  override def evaluate: Value = VFun {
+    case VFloat(x) => VFun {
+      case VFloat(y) => VFloat(x + y)
+//      case _ => VUndefined
+    }
+//    case _ => VUndefined
+  }
 }
 
 case object Mult extends Expr {
   override def typ: Type = TFloat ->: TFloat ->: TFloat
+
+  override def evaluate: Value = VFun {
+    case VFloat(x) => VFun {
+      case VFloat(y) => VFloat(x * y)
+      //      case _ => VUndefined
+    }
+    //    case _ => VUndefined
+  }
 }
 
 case object Max extends Expr {
@@ -300,6 +360,8 @@ case object One extends Expr {
 
 case object EVector extends Expr {
   override def typ: Type = TList(TFloat)
+
+  override def evaluate: Value = VList(VFloat(1) :: VFloat(2) :: VFloat(3) :: Nil)
 }
 
 case object Enumeration extends Expr {

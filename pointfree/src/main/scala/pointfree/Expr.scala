@@ -273,7 +273,13 @@ case object Foldr extends Expr {
 }
 
 case object Scan extends Expr {
-  override def typ: Type = (A ->: A ->: A) ->: TList(A) ->: TList(A)
+  override def typ: Type = (A ->: B ->: B) ->: B ->: TList(A) ->: TList(B)
+
+  override def evaluate: Value = VFun { case VFun(f) => VFun { acc => VFun { case VList(xs) => VList(xs.scanLeft(acc)((e, acc) =>
+    f(e) match {
+    case VFun(g) => g(acc)
+  }
+  )) } } }
 }
 
 case object Filter extends Expr {
@@ -298,6 +304,8 @@ case object Uncurry extends Expr {
 
 case object EZip extends Expr {
   override def typ: Type = TList(A) ->: TList(B) ->: TList(TPair(A, B))
+
+  override def evaluate: Value = VFun { case VList(xs) => VFun { case VList(ys) => VList(xs.zip(ys).map({case (a, b) => VPair(a, b)})) } }
 }
 
 case object Unzip extends Expr {
@@ -354,20 +362,26 @@ case object Mult extends Expr {
 
 case object Max extends Expr {
   override def typ: Type = TFloat ->: TFloat ->: TFloat
+
+  override def evaluate: Value = VFun { case VFloat(x) => VFun { case VFloat(y) => VFloat(x max y) }}
 }
 
 case object Zero extends Expr {
   override def typ: Type = TFloat
+  override def evaluate: Value = VFloat(0)
 }
 
 case object One extends Expr {
   override def typ: Type = TFloat
+  override def evaluate: Value = VFloat(1)
 }
 
 case object EVector extends Expr {
-  override def typ: Type = TList(TFloat)
 
-  override def evaluate: Value = VList(VFloat(1) :: VFloat(2) :: VFloat(3) :: Nil)
+  val value: VList = VList(List.fill(1000)(util.Random.nextFloat()).map(VFloat))
+
+  override def typ: Type = TList(TFloat)
+  override def evaluate: Value = value
 }
 
 case object Enumeration extends Expr {
@@ -376,14 +390,17 @@ case object Enumeration extends Expr {
 
 case object Inits extends Expr {
   override def typ: Type = TList(A) ->: TList(TList(A))
+  override def evaluate: Value = VFun { case VList(xs) => VList(initz(xs).map(VList)) }
 }
 
 case object Tails extends Expr {
   override def typ: Type = TList(A) ->: TList(TList(A))
+  override def evaluate: Value = VFun { case VList(xs) => VList(tailz(xs).map(VList)) }
 }
 
 case object Join extends Expr {
   override def typ: Type = TList(TList(A)) ->: TList(A)
+  override def evaluate: Value = VFun { case VList(xs) => VList(xs.map({ case VList(ys) => ys }).concatenate) }
 }
 
 case object Split extends Expr {

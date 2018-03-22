@@ -4,7 +4,7 @@ import org.junit.Test
 import pointfree.Equiv._
 import pointfree.IdentityEquiv._
 import pointfree.Ops._
-import pointfree.Programs.{csrMV, denseMV}
+import pointfree.Programs.{csrMV, denseMV, segs}
 import pointfree.TVar._
 
 class ExprTest {
@@ -148,6 +148,55 @@ class ExprTest {
   }
 
   @Test
+  def mssBenchmark(): Unit = {
+    val spec = Programs.maxSegSum
+    val opt = Reduce(Max) *: Scan(Plus *: Max(Zero))(Zero)
+//    val input: List[Float] = (1 to 10).map(_.asInstanceOf[Float]).toList
+    val input = List.fill(500)(util.Random.nextFloat())
+    val (specTime, specResult) = profile(spec.evaluate(input).unwrap.asInstanceOf[Float])
+    val (optTime, optResult) = profile(opt.evaluate(input).unwrap.asInstanceOf[Float])
+    println(s"$specResult ${specTime / 1e+9}")
+    println(s"$optResult ${optTime / 1e+9}")
+  }
+
+  @Test
+  def csrBenchmark(): Unit = {
+    // generate matrix
+    val matrix: List[List[Float]] = List.fill(1000)(List.fill(1000)(if (util.Random.nextInt(10) == 0) util.Random.nextFloat() else 0.0.asInstanceOf[Float]))
+
+    // generate csr matrix
+    val csrMatrix: List[List[(Int, Float)]] =
+      matrix.map(row => row
+        .zipWithIndex
+        .filter({case (v, i) => i.abs > 1e-6 })
+        .map({ case (v, i) => (i, v) }))
+
+    // dense is already define
+    val csrMV = Map(Reduce(Plus) *: Map(Uncurry(Mult *: Access(EVector))))
+
+    val (denseTime, denseRes) = profile(Programs.denseMV.evaluate(matrix))
+    val (csrTime, csrRes) = profile(csrMV.evaluate(csrMatrix))
+    println(s"${denseRes.unwrap.asInstanceOf[List[Float]].take(10)} ${denseTime / 1e+9}")
+    println(s"${csrRes.unwrap.asInstanceOf[List[Float]].take(10)} ${csrTime / 1e+9}")
+  }
+
+  def profile[A](f: => A): (Long, A) = {
+    val start = System.nanoTime()
+    val result = f
+    val end = System.nanoTime()
+    (end - start, result)
+  }
+
+  @Test
+  def interpretScan(): Unit = {
+    val prog = Scan(Plus)(Zero)
+    println(prog.typ)
+    val input: List[Float] = (1 to 10).map(_.asInstanceOf[Float]).toList
+    val result = prog.evaluate(input).unwrap.asInstanceOf[List[Float]]
+    println(result)
+  }
+
+  @Test
   def consoleColor(): Unit = {
     import Console.{BLUE, RED, RESET}
     println(s"${BLUE}blue${RESET} default")
@@ -164,13 +213,6 @@ class ExprTest {
         result.toString.replace(rhs.toString, s"$RED$rhs$RESET"))
     })
   }
-
-//  @Test
-//  def rewrite2(): Unit = {
-//    val expr = Map(Plus) *: Map(Plus) *: Map(Plus)
-//    val res = expr.rewrite2(mapDistributesThroughComposition)
-//    println(res)
-//  }
 }
 
 

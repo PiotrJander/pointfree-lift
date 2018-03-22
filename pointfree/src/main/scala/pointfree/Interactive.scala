@@ -1,34 +1,5 @@
 package pointfree
 
-//import scala.io.StdIn
-//
-//object Interactive {
-//  def main(args: Array[String]) {
-//    var program = Reduce(Plus) *: Map(Plus) *: Map(Plus) *: Map(Plus)
-//    while (true) {
-//      // foo
-//      var applicable = Equiv.applicableRules(program)
-//      var i = 0
-//
-//      var c: Char = '\0'
-//      while (c != '\n' && c != 'j' && c != 'k') {
-//        c = StdIn.readChar()
-//        c match {
-//          case '\n' =>
-//            // apply rule to program
-//          case 'k' =>
-//            i = (i - 1) % applicable.length
-//          case 'j' =>
-//            i = (i + 1) % applicable.length
-//        }
-//      }
-//
-//      // print the rules
-//      applicable.foreach(r => println(r._1))
-//    }
-//  }
-//}
-
 import net.team2xh.onions.Themes
 import net.team2xh.onions.components.Frame
 import net.team2xh.onions.components.widgets._
@@ -36,6 +7,7 @@ import net.team2xh.onions.utils.Varying
 import net.team2xh.scurses.{Colors, Scurses}
 import net.team2xh.scurses.RichText._
 import scala.collection.immutable
+import Console.{RED, BLUE, RESET}
 
 object Interactive extends App {
 
@@ -48,16 +20,22 @@ object Interactive extends App {
 
 
   // applicable rewrites
-  val applicableRewrites: Varying[List[(Equiv, Expr)]] = new Varying(List())
+  val applicableRewrites: Varying[List[(Equiv, Expr, Expr)]] = new Varying(List())
   currentProgram.subscribe { () =>
     applicableRewrites := (for {
       rule <- Equiv.rewrites
-      next <- currentProgram.value.normalizeComposition.etaExpansion.rewrite(rule)
-    } yield (rule, next.etaReduction.normalizeComposition))
+      program = currentProgram.value.normalizeComposition.etaExpansion
+      next <- program.rewrite(rule).zip(program.rewrite2(rule))
+      (result, (_, change)) = next
+    } yield (rule, result.etaReduction.normalizeComposition, change))
   }
-  val applicableRules_data = new Select.Data[(Equiv, Expr)](
+  val applicableRules_data = new Select.Data[(Equiv, Expr, Expr)](
     applicableRewrites,
-    { case (rule, next) => s"${rule.name}: ${next.toString}" }
+    { case (rule, next, change) =>
+      s"${rule.name}: ${next.toString.replace(change.toString, s"[fg:red]$change[/fg]")}"
+//      s"${rule.name}: ${next.toString.replaceFirst(change.toString, "FOO")}"
+//      s"${rule.name}: $change"
+    }
   )
 
   // derivation
@@ -79,8 +57,8 @@ object Interactive extends App {
     derivation_items := List(e.toString)
   }
 
-  def selectRewriteRule(arg: (Equiv, Expr)): Unit = {
-    val (rule, next) = arg
+  def selectRewriteRule(arg: (Equiv, Expr, Expr)): Unit = {
+    val (rule, next, _) = arg
     currentProgram := next
     derivation_items := next.toString :: s"= { ${rule.name} }" :: derivation_items.value
   }

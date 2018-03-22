@@ -102,7 +102,7 @@ sealed abstract class Expr {
           f.rewrite(equiv).map(Application(_, e)) ++ e.rewrite(equiv).map(Application(f, _))
 //          combinations(f, e, f rewrite equiv, e rewrite equiv, Application)
         case Composition(f, g) =>
-          f.rewrite(equiv).map(Application(_, g)) ++ g.rewrite(equiv).map(Application(f, _))
+          f.rewrite(equiv).map(Composition(_, g)) ++ g.rewrite(equiv).map(Composition(f, _))
 //          combinations(f, g, f rewrite equiv, g rewrite equiv, Composition)
         case _ => Nil
       })

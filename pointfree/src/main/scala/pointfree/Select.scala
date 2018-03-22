@@ -5,6 +5,7 @@ import net.team2xh.onions.components.{FramePanel, Widget}
 import net.team2xh.onions.utils.{Drawing, Varying}
 import net.team2xh.scurses.RichText.Foreground
 import net.team2xh.scurses.{Keys, Scurses}
+import net.team2xh.scurses.RichText.RichTextHelper
 
 object Select {
   class Data[A](val args: Varying[List[A]], f: A => String) {
@@ -29,11 +30,12 @@ case class Select[A](parent: FramePanel, data: Select.Data[A], action: A => Unit
   def drawText(foreground: Int, background: Int): Unit = {
     for ((line, i) <- data.items.zipWithIndex) {
       if (i == data.counter.value) {
-        screen.put(0, i, Drawing.clipText(line, innerWidth),
-          foreground = background, background = foreground)
+        screen.putRichText(0, i, r"$line", background, foreground)
+//        screen.putRichText(0, i, Drawing.clipText(line, innerWidth), background, foreground)
       } else {
-        screen.put(0, i, Drawing.clipText(line, innerWidth),
-          foreground = foreground, background = background)
+//        screen.put(0, i, Drawing.clipText(line, innerWidth),
+//          foreground = foreground, background = background)
+        screen.putRichText(0, i, r"$line", foreground, background)
       }
 
     }

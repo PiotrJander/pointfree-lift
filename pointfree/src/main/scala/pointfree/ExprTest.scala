@@ -153,6 +153,18 @@ class ExprTest {
     println(s"${BLUE}blue${RESET} default")
   }
 
+  @Test
+  def highlights(): Unit = {
+    import Console.{BLUE, RED, RESET}
+    val prog = Map(Plus) *: Map(Mult) *: Map(And) *: Identity
+    val results = prog.rewrite(mapUnDistributesThroughComposition)
+    val changes = prog.rewrite2(mapUnDistributesThroughComposition)
+    results.zip(changes).foreach({case (result, (lhs, rhs)) =>
+      println(prog.toString.replace(lhs.toString, s"$BLUE$lhs$RESET") + "->" +
+        result.toString.replace(rhs.toString, s"$RED$rhs$RESET"))
+    })
+  }
+
 //  @Test
 //  def rewrite2(): Unit = {
 //    val expr = Map(Plus) *: Map(Plus) *: Map(Plus)

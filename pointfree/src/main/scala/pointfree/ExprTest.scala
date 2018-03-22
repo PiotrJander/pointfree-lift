@@ -82,8 +82,8 @@ class ExprTest {
       .tap(le => println(le.head))
       .rewrite(mapPromotion)
       .rewrite(catamorphismPromotion)
-      .rewrite(mapDistributesThroughComposition)
-      .rewrite(mapDistributesThroughComposition)
+      .rewrite(mapUnDistributesThroughComposition)
+      .rewrite(mapUnDistributesThroughComposition)
       .rewrite(hornersRule)
       .rewrite(foldToScan)
       .typecheck()
@@ -145,6 +145,12 @@ class ExprTest {
 //    val input: (Int, Float) = (2, 1)
     val result = prog.evaluate(input).unwrap.asInstanceOf[List[Float]]
     println(result)
+  }
+
+  @Test
+  def consoleColor(): Unit = {
+    import Console.{BLUE, RED, RESET}
+    println(s"${BLUE}blue${RESET} default")
   }
 
 //  @Test

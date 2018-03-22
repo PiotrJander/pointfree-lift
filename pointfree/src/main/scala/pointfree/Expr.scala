@@ -98,30 +98,32 @@ sealed abstract class Expr {
     val Equiv(_, lhs, rhs, transform) = equiv
     (lhs unify this).flatMap(transform).map(rhs substitute).toList ++ // rewrites this
       (this match { // recurse
-        case Application(f, e) => combinations(f, e, f rewrite equiv, e rewrite equiv, Application)
-        case Composition(f, g) => combinations(f, g, f rewrite equiv, g rewrite equiv, Composition)
+        case Application(f, e) =>
+          f.rewrite(equiv).map(Application(_, e)) ++ e.rewrite(equiv).map(Application(f, _))
+//          combinations(f, e, f rewrite equiv, e rewrite equiv, Application)
+        case Composition(f, g) =>
+          f.rewrite(equiv).map(Application(_, g)) ++ g.rewrite(equiv).map(Application(f, _))
+//          combinations(f, g, f rewrite equiv, g rewrite equiv, Composition)
         case _ => Nil
       })
   }
 
-//  def rewrite2(equiv: Equiv): Option[(String, Expr, Expr, Expr)] = {
-//    val Equiv(name, lhs, rhs, transform) = equiv
-//    (lhs unify this).flatMap(transform).map(s => {
-//      val s_ = s + (EVar.Rest.n -> Identity)
-//      val placeholder = if (s.contains(EVar.Rest.n)) EVar.Placeholder *: s(EVar.Rest.n) else EVar.Placeholder
-//      val source = lhs.substitute(s_).etaReduction
-//      val dest = rhs.substitute(s_).etaReduction
-//      (name, placeholder, source, dest)
-//    }) <+> (this match {
-//      case Application(f, e) =>
-//        f.rewrite2(equiv).map(applyFirst(placeholder => Application(placeholder, e))) <+>
-//          e.rewrite2(equiv).map(applyFirst(placeholder => Application(f, placeholder)))
-//      case Composition(f, g) =>
-//        f.rewrite2(equiv).map(applyFirst(placeholder => Application(placeholder, g))) <+>
-//          g.rewrite2(equiv).map(applyFirst(placeholder => Application(f, placeholder)))
-//      case _ => None
-//    })
-//  }
+  def rewrite2(equiv: Equiv): List[(Expr, Expr)] = {
+    val Equiv(_, lhs, rhs, transform) = equiv
+    (lhs unify this).flatMap(transform).map({ subst =>
+      val subst_ = subst + (EVar.Rest.n -> Identity)
+      (lhs.substitute(subst_).etaReduction, rhs.substitute(subst_).etaReduction)
+    }).toList ++ // rewrites this
+      (this match { // recurse
+        case Application(f, e) =>
+//          combinations2(f, e, f rewrite2 equiv, e rewrite2 equiv, Application)
+          f.rewrite2(equiv) ++ e.rewrite2(equiv)
+        case Composition(f, g) =>
+          f.rewrite2(equiv) ++ g.rewrite2(equiv)
+//          combinations2(f, g, f rewrite2 equiv, g rewrite2 equiv, Composition)
+        case _ => Nil
+      })
+  }
 
   def applyFirst(f: Expr => Expr)(p: (String, Expr, Expr, Expr)): (String, Expr, Expr, Expr) = {
     val (n, a, b, c) = p

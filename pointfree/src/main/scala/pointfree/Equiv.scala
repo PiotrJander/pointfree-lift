@@ -57,8 +57,8 @@ object Equiv {
 
   // max seg sum
 
-  val mapDistributesThroughComposition = Equiv(
-    name = "map distributes backwards through composition",
+  val mapUnDistributesThroughComposition = Equiv(
+    name = "map un-distributes through composition",
     left = Map(A) *: Map(B) *: Rest,
     right = Map(A *: B) *: Rest
   )
@@ -112,7 +112,7 @@ object Equiv {
     filterMapMultAbsorber,
     filterSumMonoid,
     mapOverZippedEnumeration,
-    mapDistributesThroughComposition,
+    mapUnDistributesThroughComposition,
     mapPromotion,
     catamorphismPromotion,
     hornersRule,

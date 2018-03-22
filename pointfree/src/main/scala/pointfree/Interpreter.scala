@@ -1,5 +1,0 @@
-package pointfree
-
-class Interpreter {
-
-}

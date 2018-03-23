@@ -8,20 +8,13 @@ object Programs {
   val denseMV: Expr = Map(Reduce(Plus) *: Map(Uncurry(Mult)) *: EZip(EVector))
 
   val csrMV: Expr =
-    Map(
-      Reduce(Plus) *:
-        Map(Uncurry(Mult *: Access(EVector)))
-    ) *:
-      Map(
-        Filter(Neq(Zero) *: Snd) *:
-          EZip(Enumeration)
-      )
+    Map(Reduce(Plus) *: Map(Uncurry(Mult *: Access(EVector))))
 
-  val densePair: Expr =
-    Curry(Map(Reduce(Plus)) *: Map(Map(Uncurry(Mult))) *: Map(Uncurry(EZip)) *: Uncurry(EZip)) *: Repeat
+  val csrConv = Map(Filter(Neq(Zero) *: Snd) *: EZip(Enumeration))
 
   val bsrMV: Expr =
-    Join *: Map(Reduce(Lift(Plus)) *: Map(Uncurry(densePair *: Access(Split(EVector)))))
+    Join *: Map(Reduce(ZipWith(Plus)) *: Map(Map(Reduce(Plus) *: Map(Uncurry(Mult))) *: Uncurry(Map *: EZip *: Access(Split(EVector)))))
+//    Join *: Map(Map(Map(Reduce(Plus) *: Map(Uncurry(Mult))) *: Uncurry(Map *: EZip *: Access(Split(EVector)))))
 
   val segs: Expr = Join *: Map(Tails) *: Inits
 

@@ -259,7 +259,7 @@ case object Reduce extends Expr {
 
   override def evaluate: Value = VFun {
     case VFun(f) => VFun {
-      case VList(list) => list.foldRight(VFloat(0).asInstanceOf[Value])((e, acc) => {  // TODO need a start value as a param
+      case VList(list) => list.reduce((e, acc) => {  // TODO need a start value as a param
         f(e) match {
           case VFun(g) => g(acc)
         }
@@ -403,8 +403,18 @@ case object Join extends Expr {
   override def evaluate: Value = VFun { case VList(xs) => VList(xs.map({ case VList(ys) => ys }).concatenate) }
 }
 
+case object ZipWith extends Expr {
+  override def typ: Type = (A ->: B ->: C) ->: TList(A) ->: TList(B) ->: TList(C)
+  override def evaluate: Value = VFun {
+    case VFun(f) => VFun {
+      case VList(xs) => VFun {
+        case VList(ys) =>
+          VList(xs.zip(ys).map {case (a, b) => f(a) match { case VFun(g) => g(b) } } ) } } }
+}
+
 case object Split extends Expr {
   override def typ: Type = TList(A) ->: TList(TList(A))
+  override def evaluate: Value = VFun { case VList(xs) => VList(xs.grouped(100).toList.map(VList)) }
 }
 
 case object PairSplit extends Expr {

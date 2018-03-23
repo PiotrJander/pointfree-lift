@@ -6,6 +6,9 @@ import pointfree.IdentityEquiv._
 import pointfree.Ops._
 import pointfree.Programs.{csrMV, denseMV, segs}
 import pointfree.TVar._
+import util.Random
+import scalaz._
+import Scalaz._
 
 class ExprTest {
 
@@ -180,6 +183,33 @@ class ExprTest {
     println(s"${csrRes.unwrap.asInstanceOf[List[Float]].take(10)} ${csrTime / 1e+9}")
   }
 
+  def toCsr(dense: List[List[Float]]): List[List[(Int, Float)]] =
+    dense.map(row => row
+    .zipWithIndex
+    .filter({ case (v, i) => i.abs > 1e-6 })
+    .map({ case (v, i) => (i, v) }))
+
+  @Test
+  def bsrBenchmark(): Unit = {
+    // make a bsr matrix
+    val input: List[List[(Int, List[List[Float]])]] = List.fill(10)(List.fill(10)(Random.nextBoolean()).zipWithIndex.filter(_._1).map({ case (v, i) =>
+      (i, List.fill(100)(List.fill(100)(if (Random.nextBoolean()) Random.nextFloat() else 0))) }))
+    val denseInput: List[List[Float]] = input.map(blockRow => fromBsrRow(0, blockRow).transpose.map(_.concatenate)).map(_.concatenate)
+    val csrInput = toCsr(denseInput)
+
+
+
+    // evaluate
+    println(Programs.bsrNew.evaluate(input).unwrap.asInstanceOf[List[Float]].take(10))
+  }
+
+  val zeroBlock: List[List[Float]] = List.fill(100)(List.fill(100)(0))
+
+  def fromBsrRow(i: Int, blockRow: List[(Int, List[List[Float]])]): List[List[List[Float]]] = blockRow match {
+    case Nil => if (i == 10) Nil else zeroBlock :: fromBsrRow(i + 1, Nil)
+    case (j, block) :: rest => if (j == i) block :: fromBsrRow(i + 1, rest) else zeroBlock :: fromBsrRow(i + 1, (j, block) :: rest)
+  }
+
   def profile[A](f: => A): (Long, A) = {
     val start = System.nanoTime()
     val result = f
@@ -212,6 +242,11 @@ class ExprTest {
       println(prog.toString.replace(lhs.toString, s"$BLUE$lhs$RESET") + "->" +
         result.toString.replace(rhs.toString, s"$RED$rhs$RESET"))
     })
+  }
+
+  @Test
+  def bsrNew(): Unit = {
+    println(Programs.bsrNew.typ)
   }
 }
 

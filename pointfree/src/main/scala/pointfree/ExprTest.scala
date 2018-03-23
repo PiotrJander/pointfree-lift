@@ -108,18 +108,8 @@ class ExprTest {
   }
 
   @Test
-  def densePair(): Unit = {
-    println(Programs.densePair.typ)
-  }
-
-  @Test
   def denseToBsr(): Unit = {
     println(Programs.denseToBSr.typ)
-  }
-
-  @Test
-  def bsrMV(): Unit = {
-    println(Programs.bsrMV.typ)
   }
 
   @Test
@@ -165,7 +155,7 @@ class ExprTest {
   @Test
   def csrBenchmark(): Unit = {
     // generate matrix
-    val matrix: List[List[Float]] = List.fill(1000)(List.fill(1000)(if (util.Random.nextInt(10) == 0) util.Random.nextFloat() else 0.0.asInstanceOf[Float]))
+    val matrix: List[List[Float]] = List.fill(1000)(List.fill(1000)(if (util.Random.nextInt(10) == 0) util.Random.nextFloat() else 0))
 
     // generate csr matrix
     val csrMatrix: List[List[(Int, Float)]] =
@@ -192,15 +182,17 @@ class ExprTest {
   @Test
   def bsrBenchmark(): Unit = {
     // make a bsr matrix
-    val input: List[List[(Int, List[List[Float]])]] = List.fill(10)(List.fill(10)(Random.nextBoolean()).zipWithIndex.filter(_._1).map({ case (v, i) =>
+    val bsrInput: List[List[(Int, List[List[Float]])]] = List.fill(10)(List.fill(10)(Random.nextBoolean()).zipWithIndex.filter(_._1).map({ case (v, i) =>
       (i, List.fill(100)(List.fill(100)(if (Random.nextBoolean()) Random.nextFloat() else 0))) }))
-    val denseInput: List[List[Float]] = input.map(blockRow => fromBsrRow(0, blockRow).transpose.map(_.concatenate)).map(_.concatenate)
+    val denseInput: List[List[Float]] = bsrInput.map(blockRow => fromBsrRow(0, blockRow).transpose.map(_.concatenate)).concatenate
     val csrInput = toCsr(denseInput)
 
-
-
-    // evaluate
-    println(Programs.bsrNew.evaluate(input).unwrap.asInstanceOf[List[Float]].take(10))
+    val (denseTime, denseRes) = profile(Programs.denseMV.evaluate(denseInput))
+    val (csrTime, csrRes) = profile(Programs.csrMV.evaluate(csrInput))
+    val (bsrTime, bsrRes) = profile(Programs.bsrMV.evaluate(bsrInput))
+    println(s"${denseRes.unwrap.asInstanceOf[List[Float]].take(10)} ${denseTime / 1e+9}")
+    println(s"${csrRes.unwrap.asInstanceOf[List[Float]].take(10)} ${csrTime / 1e+9}")
+    println(s"${bsrRes.unwrap.asInstanceOf[List[Float]].take(10)} ${bsrTime / 1e+9}")
   }
 
   val zeroBlock: List[List[Float]] = List.fill(100)(List.fill(100)(0))
@@ -246,7 +238,7 @@ class ExprTest {
 
   @Test
   def bsrNew(): Unit = {
-    println(Programs.bsrNew.typ)
+    println(Programs.bsrMV.typ)
   }
 }
 

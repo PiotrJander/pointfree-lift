@@ -378,7 +378,7 @@ case object One extends Expr {
 
 case object EVector extends Expr {
 
-  val value: VList = VList(List.fill(1000)(util.Random.nextFloat()).map(VFloat))
+  val value: VList = VList(Vector.fill(1000)(util.Random.nextFloat()).map(VFloat))
 
   override def typ: Type = TList(TFloat)
   override def evaluate: Value = value
@@ -390,12 +390,12 @@ case object Enumeration extends Expr {
 
 case object Inits extends Expr {
   override def typ: Type = TList(A) ->: TList(TList(A))
-  override def evaluate: Value = VFun { case VList(xs) => VList(initz(xs).map(VList)) }
+  override def evaluate: Value = VFun { case VList(xs) => VList(initz(xs.toList).toVector.map(_.toVector).map(VList)) }
 }
 
 case object Tails extends Expr {
   override def typ: Type = TList(A) ->: TList(TList(A))
-  override def evaluate: Value = VFun { case VList(xs) => VList(tailz(xs).map(VList)) }
+  override def evaluate: Value = VFun { case VList(xs) => VList(tailz(xs.toList).toVector.map(_.toVector).map(VList)) }
 }
 
 case object Join extends Expr {
@@ -414,7 +414,7 @@ case object ZipWith extends Expr {
 
 case object Split extends Expr {
   override def typ: Type = TList(A) ->: TList(TList(A))
-  override def evaluate: Value = VFun { case VList(xs) => VList(xs.grouped(100).toList.map(VList)) }
+  override def evaluate: Value = VFun { case VList(xs) => VList(xs.grouped(100).toVector.map(VList)) }
 }
 
 case object PairSplit extends Expr {

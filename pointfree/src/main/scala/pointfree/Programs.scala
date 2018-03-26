@@ -18,7 +18,7 @@ object Programs {
 
   val segs: Expr = Join *: Map(Tails) *: Inits
 
-  val maxSegSum: Expr = Reduce(Max) *: Map(Reduce(Plus)) *: segs
+  val maxSegSum: Expr = Reduce(Max) *: Map(Fold(Plus)(Zero)) *: segs
 
 //  val mssHomomorphism: Expr = MssExtract *: Reduce(MssFold) *: Map(MssMap)
 
@@ -32,10 +32,10 @@ object Programs {
     bsrMV *: denseToBSr
 
   val binaryHypeproduct: Expr =
-    Foldr(Zero)(mult) *: Tri(Square)
+    Fold(Zero)(mult) *: Tri(Square)
 
   val iai: Expr =
-    Foldr(Pair(Zero)(Zero))(PlusElemwise) *: Tri(AddSelf) *: Map(Split(Const(Zero))(Identity))
+    Fold(Pair(Zero)(Zero))(PlusElemwise) *: Tri(AddSelf) *: Map(Split(Const(Zero))(Identity))
 }
 
 

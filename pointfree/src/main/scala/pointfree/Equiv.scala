@@ -84,8 +84,8 @@ object Equiv {
 
   val birdsHornersRule = Equiv(
     name = "Bird's Horner's rule",
-    left = Foldr(A)(B) *: Tri(C) *: Rest,
-    right = Foldr(A)(B *: Bimap(Identity)(C)) *: Rest,
+    left = Fold(A)(B) *: Tri(C) *: Rest,
+    right = Fold(A)(B *: Bimap(Identity)(C)) *: Rest,
     transform = s => { distributivity.contains((s(C), s(B))).option(s) }
   )
 

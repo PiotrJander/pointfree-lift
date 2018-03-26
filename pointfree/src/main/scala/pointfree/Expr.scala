@@ -16,7 +16,7 @@ sealed abstract class Expr {
 
   def typ: Type
 
-  def evaluate: Value = VUndefined
+  def evaluate: Value = VUndefined(this.toString)
 
   def evaluate(input: Any): Value = this.evaluate match {
     case VFun(f) => f(Value.wrap(input))
@@ -268,8 +268,14 @@ case object Reduce extends Expr {
   }
 }
 
-case object Foldr extends Expr {
-  override def typ: Type = B ->: (TPair(A, B) ->: B) ->: TList(A) ->: B
+case object Fold extends Expr {
+  override def typ: Type = (A ->: B ->: B) ->: B ->: TList(A) ->: B
+
+  override def evaluate: Value =
+    VFun { acc =>
+      VFun { case VFun(f) =>
+        VFun { case VList(xs) =>
+          xs.foldl(acc)({ acc => elem => f(acc) match { case VFun(g) => g(elem) } }) } } }
 }
 
 case object Scan extends Expr {

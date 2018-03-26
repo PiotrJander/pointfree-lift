@@ -12,7 +12,7 @@ object Value {
     case v: Vector[Any] => VList(v.map(e => wrap(e)))
     case v: (Any, Any) => VPair(wrap(v._1), wrap(v._2))
 //    case v: (Value => Value) => VFun(v)
-    case _ => VUndefined
+    case _ => VUndefined(v.toString)
   }
 }
 
@@ -40,6 +40,6 @@ case class VFun(v: Value => Value) extends Value {
   override def unwrap: Any = ???
 }
 
-case object VUndefined extends Value {
+case class VUndefined(msg: String) extends Value {
   override def unwrap: Any = ???
 }

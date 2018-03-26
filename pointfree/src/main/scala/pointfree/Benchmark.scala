@@ -1,8 +1,10 @@
 package pointfree
 
 import org.junit.Test
+
 import scalaz._
 import Scalaz._
+import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 class Benchmark {
@@ -39,16 +41,26 @@ class Benchmark {
     (end - start, result)
   }
 
+  def median(s: Seq[Long]): Long = {
+    val (lower, upper) = s.sortWith(_<_).splitAt(s.size / 2)
+    if (s.size % 2 == 0) (lower.last + upper.head) / 2 else upper.head
+  }
+
   @Test
   def csrBenchmark(): Unit = {
-    val denseInput: Vector[Vector[Float]] = generateDense(1000, 1000, 10)
-    val csrInput: Vector[Vector[(Int, Float)]] = csrFromDense(denseInput)
-
-    val (denseTime, denseRes) = profile(Programs.denseMV.evaluate(denseInput))
-    val (csrTime, csrRes) = profile(Programs.csrMV.evaluate(csrInput))
-
-    println(s"dense ${denseRes.unwrap.asInstanceOf[Vector[Float]].take(10)} ${denseTime / 1e+9}")
-    println(s"csr ${csrRes.unwrap.asInstanceOf[Vector[Float]].take(10)} ${csrTime / 1e+9}")
+    val reps = 30
+    val bench = List(1, 2, 4, 8, 16).map(density => {
+      val denseInput: Vector[Vector[Float]] = generateDense(1000, 1000, density)
+      val csrInput: Vector[Vector[(Int, Float)]] = csrFromDense(denseInput)
+      val denseTime = median((0 to reps).map(_ => profile(Programs.denseMV.evaluate(denseInput))._1))
+      val csrTime = median((0 to reps).map(_ => profile(Programs.csrMV.evaluate(csrInput))._1))
+      (denseTime, csrTime)
+    })
+    bench.unzip match {
+      case (dense, csr) =>
+        println(dense)
+        println(csr)
+    }
   }
 
   @Test
@@ -64,5 +76,16 @@ class Benchmark {
     println(s"dense ${denseRes.unwrap.asInstanceOf[Vector[Float]].take(10)} ${denseTime / 1e+9}")
     println(s"csr ${csrRes.unwrap.asInstanceOf[Vector[Float]].take(10)} ${csrTime / 1e+9}")
     println(s"bsr ${bsrRes.unwrap.asInstanceOf[Vector[Float]].take(10)} ${bsrTime / 1e+9}")
+  }
+
+  @Test
+  def mssBenchmark(): Unit = {
+    val spec = Programs.maxSegSum
+    val opt = Reduce(Max) *: Scan(Plus *: Max(Zero))(Zero)
+    val input = List.fill(500)(util.Random.nextFloat())
+    val (specTime, specResult) = profile(spec.evaluate(input).unwrap.asInstanceOf[Float])
+    val (optTime, optResult) = profile(opt.evaluate(input).unwrap.asInstanceOf[Float])
+    println(s"$specResult ${specTime / 1e+9}")
+    println(s"$optResult ${optTime / 1e+9}")
   }
 }

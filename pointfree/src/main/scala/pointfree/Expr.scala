@@ -272,10 +272,16 @@ case object Fold extends Expr {
   override def typ: Type = (A ->: B ->: B) ->: B ->: TList(A) ->: B
 
   override def evaluate: Value =
-    VFun { acc =>
-      VFun { case VFun(f) =>
+    VFun { case VFun(f) =>
+      VFun { acc =>
         VFun { case VList(xs) =>
-          xs.foldl(acc)({ acc => elem => f(acc) match { case VFun(g) => g(elem) } }) } } }
+          xs.foldl(acc)({ acc => elem => f(acc) match {
+            case VFun(g) => g(elem)
+          }
+          })
+        }
+      }
+    }
 }
 
 case object Scan extends Expr {

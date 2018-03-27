@@ -90,18 +90,30 @@ class Benchmark {
 
   @Test
   def mssBenchmark(): Unit = {
+    val reps = 10
     val spec = Programs.maxSegSum
-    val opt = Reduce(Max) *: Scan(Plus *: Max(Zero))(Zero)
-    val input = Vector.fill(500)(util.Random.nextFloat())
-    val (specTime, specResult) = profile(spec.evaluate(input).unwrap.asInstanceOf[Float])
-    val (optTime, optResult) = profile(opt.evaluate(input).unwrap.asInstanceOf[Float])
-    println(s"$specResult ${specTime / 1e+9}")
-    println(s"$optResult ${optTime / 1e+9}")
+    val mid = Fold(Max)(Zero) *: Map(Fold(Plus *: Max(Zero))(Zero)) *: Inits
+    val opt = Fold(Max)(Zero) *: Scan(Plus *: Max(Zero))(Zero)
+
+    val bench = Vector(16, 32, 64, 128, 256).map(size => {
+      val input = Vector.fill(size)(util.Random.nextFloat())
+      val specTime = median((1 to reps).map(_ => profile(spec.evaluate(input))._1))
+      val midTime = median((1 to reps).map(_ => profile(mid.evaluate(input))._1))
+      val optTime = median((1 to reps).map(_ => profile(opt.evaluate(input))._1))
+      Vector(specTime, midTime, optTime)
+    })
+
+    println(bench.transpose.map(_.mkString(" ")).mkString("\n"))
   }
 
-  @Test
-  def mssDebug(): Unit = {
-    val segs: Expr = Join *: Map(Tails) *: Inits
-    val maxSegSum: Expr = Reduce(Max) *: Map(Fold(Plus)(Zero)) *: segs
-  }
+//  @Test
+//  def mssDebug(): Unit = {
+//    println(Programs.maxSegSum.typ)
+////    val maxSegSum = Reduce(Max) *: Map(Fold(Plus)(Zero)) *: Join *: Map(Tails) *: Inits
+////    val maxSegSum = Map(Fold(Plus)(Zero)) *: Join *: Map(Tails) *: Inits
+//    val maxSegSum = Fold(Plus)(Zero)
+//    val input = Vector.fill(10)(util.Random.nextFloat())
+//    val (specTime, specResult) = profile(maxSegSum.evaluate(input))
+//    println(s"${specResult.unwrap.asInstanceOf[Float]} $specTime")
+//  }
 }

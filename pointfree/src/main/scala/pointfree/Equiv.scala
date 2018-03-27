@@ -71,15 +71,15 @@ object Equiv {
 
   val catamorphismPromotion = Equiv(
     name = "catamorphims promotion",
-    left = Reduce(A) *: Join *: Rest,
-    right = Reduce(A) *: Map(Reduce(A)) *: Rest
+    left = Fold(A)(B) *: Join *: Rest,
+    right = Fold(A)(B) *: Map(Fold(A)(B)) *: Rest
   )
 
   val hornersRule = Equiv(
     name = "Horner's rule",
-    left = Reduce(A) *: Map(Reduce(B)) *: Tails *: Rest,
-    right = Reduce(B *: A(D)) *: Rest,
-    transform = s => neutralElement.get(s(B)).map(neutral => s + (D.n -> neutral))
+    left = Fold(A)(D) *: Map(Fold(B)(C)) *: Tails *: Rest,
+    right = Fold(B *: A(C))(D) *: Rest,
+//    transform = s => neutralElement.get(s(B)).map(neutral => s + (D.n -> neutral))
   )
 
   val birdsHornersRule = Equiv(
@@ -91,8 +91,8 @@ object Equiv {
 
   val foldToScan = Equiv(
     name = "fold to scan",
-    left = Map(Reduce(A)) *: Inits *: Rest,
-    right = Scan(A) *: Rest
+    left = Map(Fold(A)(B)) *: Inits *: Rest,
+    right = Scan(A)(B) *: Rest
   )
 
   /**

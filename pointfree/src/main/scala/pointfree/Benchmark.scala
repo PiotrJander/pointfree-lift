@@ -4,8 +4,8 @@ import org.junit.Test
 
 import scalaz._
 import Scalaz._
-import scala.collection.mutable.ListBuffer
 import scala.util.Random
+import scala.math.pow
 
 class Benchmark {
   def generateDense(m: Int, n: Int, density: Int): Vector[Vector[Float]] =
@@ -38,6 +38,7 @@ class Benchmark {
     val start = System.nanoTime()
     val result = f
     val end = System.nanoTime()
+    println("done")
     (end - start, result)
   }
 
@@ -88,22 +89,26 @@ class Benchmark {
     println(bench.transpose.map(_.map(_ / 1e+9)).map(_.mkString(" ")).mkString("\n"))
   }
 
+  def power(n: Int, exp: Int): Int = if (exp == 0) 1 else n * power(n, exp - 1)
+
   @Test
   def mssBenchmark(): Unit = {
     val reps = 10
     val spec = Programs.maxSegSum
     val mid = Fold(Max)(Zero) *: Map(Fold(Plus *: Max(Zero))(Zero)) *: Inits
     val opt = Fold(Max)(Zero) *: Scan(Plus *: Max(Zero))(Zero)
+    val magnitude = 18
 
-    val bench = Vector(16, 32, 64, 128, 256).map(size => {
+    val bench = (power(2, magnitude + 2) to power(2, magnitude + 3) by power(2, magnitude)).map(size => {
       val input = Vector.fill(size)(util.Random.nextFloat())
-      val specTime = median((1 to reps).map(_ => profile(spec.evaluate(input))._1))
-      val midTime = median((1 to reps).map(_ => profile(mid.evaluate(input))._1))
+//      val specTime = median((1 to reps).map(_ => profile(spec.evaluate(input))._1))
+//      val midTime = median((1 to reps).map(_ => profile(mid.evaluate(input))._1))
       val optTime = median((1 to reps).map(_ => profile(opt.evaluate(input))._1))
-      Vector(specTime, midTime, optTime)
+//      Vector(specTime, midTime, optTime)
+      Vector(optTime)
     })
 
-    println(bench.transpose.map(_.mkString(" ")).mkString("\n"))
+    println(bench.transpose.map(_.map(_ / 1e+9).map(x => f"$x%1.3f")).map(_.mkString(",")).mkString("\n"))
   }
 
 //  @Test
